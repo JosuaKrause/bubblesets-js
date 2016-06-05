@@ -6,6 +6,12 @@ without the use of external libraries. A Java implementation can be found [here]
 
 Usage:
 
+```html
+<script src="bubblesets.js" charset="utf-8"></script>
+```
+
+and
+
 ```javascript
 var bubbles = new BubbleSet();
 // bubbles can be reused for subsequent runs or different sets of rectangles
