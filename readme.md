@@ -29,5 +29,4 @@ if(outline.length) {
 
 See also the [example](http://josuakrause.github.io/bubblesets-js/) (add rectangles by clicking with the left or right mouse button).
 
-For now this is a one-to-one translation of the Java code.
-More changes to come after that.
+This is a one-to-one translation of the Java code.
