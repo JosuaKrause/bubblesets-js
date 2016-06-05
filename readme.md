@@ -7,6 +7,8 @@ without the use of external libraries. A Java implementation can be found [here]
 Usage:
 
 ```javascript
+var bubbles = new BubbleSet();
+// bubbles can be reused for subsequent runs or different sets of rectangles
 var list = bubbles.createOutline(rectangles, otherRectangles, null /* lines */);
 // rectangles needs to be a list of objects of the form { x: 0, y: 0, width: 0, height: 0 }
 // lines needs to be a list of objects of the form { x1: 0, x2: 0, y1: 0, y2: 0 }
