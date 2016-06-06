@@ -70,8 +70,11 @@ function BubbleSet() {
     };
     this.contains = function(p) {
       var px = p.x();
-      if(px < x || px >= x + width) return false;
       var py = p.y();
+      return that.containsPt(px, py);
+    };
+    this.containsPt = function(px, py) {
+      if(px < x || px >= x + width) return false;
       return !(py < y || py >= y + height);
     };
     this.intersects = function(rect) {
@@ -158,12 +161,15 @@ function BubbleSet() {
       y = _;
     };
     this.distanceSq = function(p) {
-      return (p.x() - x) * (p.x() - x) + (p.y() - y) * (p.y() - y);
+      return Point.ptsDistanceSq(x, y, p.x(), p.y());
     };
     this.get = function() {
       return [ x, y ];
     };
   } // Point
+  Point.ptsDistanceSq = function(x1, y1, x2, y2) {
+    return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+  };
   Point.doublePointsEqual = function(p1, p2, delta) {
     return p1.distanceSq(p2) < delta * delta;
   };
@@ -1176,23 +1182,22 @@ function BubbleSet() {
         var tempY = y * pixelGroup;
         var distanceSq;
         // test current point to see if it is inside rectangle
-        if(rect.contains(new Point(tempX, tempY))) {
+        if(rect.containsPt(tempX, tempY)) {
           distanceSq = 0;
         } else {
           // which edge of rectangle is closest
           var outcode = rect.outcode(tempX, tempY);
-          var p = new Point(tempX, tempY);
           // top
           if((outcode & Rectangle.OUT_TOP) === Rectangle.OUT_TOP) {
             // and left
             if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
               // linear distance from upper left corner
-              distanceSq = p.distanceSq(new Point(rect.minX(), rect.minY()));
+              distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.minY());
             } else {
               // and right
               if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
                 // linear distance from upper right corner
-                distanceSq = p.distanceSq(new Point(rect.maxX(), rect.minY()));
+                distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.minY());
               } else {
                 // distance from top line segment
                 distanceSq = Line.ptSegDistSq(rect.minX(), rect.minY(), rect.maxX(), rect.minY(), tempX, tempY);
@@ -1204,12 +1209,12 @@ function BubbleSet() {
               // and left
               if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
                 // linear distance from lower left corner
-                distanceSq = p.distanceSq(new Point(rect.minX(), rect.maxY()));
+                distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.maxY());
               } else {
                 // and right
                 if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
                   // linear distance from lower right corner
-                  distanceSq = p.distanceSq(new Point(rect.maxX(), rect.maxY()));
+                  distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.maxY());
                 } else {
                   // distance from bottom line segment
                   distanceSq = Line.ptSegDistSq(rect.minX(), rect.maxY(), rect.maxX(), rect.maxY(), tempX, tempY);
