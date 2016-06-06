@@ -1372,3 +1372,71 @@ BubbleSet.DEFAULT_NODE_R0 = 15;
 BubbleSet.DEFAULT_NODE_R1 = 50;
 BubbleSet.DEFAULT_MORPH_BUFFER = BubbleSet.DEFAULT_NODE_R0;
 BubbleSet.DEFAULT_SKIP = 8;
+
+function PointPath(_points) {
+  var that = this;
+  var arr = [];
+  var closed = true;
+  this.closed = function(_) {
+    if(!arguments.length) return closed;
+    closed = _;
+  };
+
+  this.addAll = function(points) {
+    points.forEach(function(p) {
+      that.add(p);
+    });
+  };
+  this.add = function(p) {
+    var x = p[0];
+    var y = p[1];
+    if(Number.isNaN(x) || Number.isNaN(y)) {
+      console.warn("Point with NaN", x, y);
+    }
+    arr.push([ x, y ]);
+  };
+  this.size = function() {
+    return arr.length;
+  };
+  this.get = function(ix) {
+    var size = that.size();
+    var closed = that.closed();
+    if(ix < 0) {
+      return closed ? that.get(ix + size) : that.get(0);
+    }
+    if(ix >= size) {
+      return closed ? that.get(ix - size) : that.get(size - 1);
+    }
+    return arr[ix];
+  };
+  this.forEach = function(cb) {
+    arr.forEach(function(el, ix) {
+      cb(el, ix, that);
+    });
+  };
+  this.isEmpty = function() {
+    return !that.size();
+  };
+
+  if(arguments.length && _points) {
+    that.addAll(_points);
+  }
+} // PointPath
+PointPath.prototype.toString = function() {
+  var that = this;
+  var outline = "";
+  that.forEach(function(p) {
+    if(!outline.length) {
+      outline += "M" + p[0] + " " + p[1];
+    } else {
+      outline += " L" + p[0] + " " + p[1];
+    }
+  });
+  if(!outline.length) {
+    return "M0 0";
+  }
+  if(that.closed()) {
+    outline += " Z";
+  }
+  return outline;
+};
