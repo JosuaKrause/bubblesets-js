@@ -273,7 +273,7 @@ function BubbleSet() {
     };
   }; // Line
   Line.ptSegDistSq = function(lx1, ly1, lx2, ly2, x, y) {
-    return linePtSegDistSq(lx1, ly1, lx2, ly2, x, y);
+    return BubbleSet.linePtSegDistSq(lx1, ly1, lx2, ly2, x, y);
   };
 
   function Area(width, height) {
@@ -1348,7 +1348,7 @@ BubbleSet.DEFAULT_NODE_R1 = 50;
 BubbleSet.DEFAULT_MORPH_BUFFER = BubbleSet.DEFAULT_NODE_R0;
 BubbleSet.DEFAULT_SKIP = 8;
 
-function linePtSegDistSq(lx1, ly1, lx2, ly2, x, y) {
+BubbleSet.linePtSegDistSq = function(lx1, ly1, lx2, ly2, x, y) {
   // taken from JDK 8 java.awt.geom.Line2D#ptSegDistSq(double, double, double, double, double, double)
   var x1 = lx1;
   var y1 = ly1;
@@ -1375,7 +1375,18 @@ function linePtSegDistSq(lx1, ly1, lx2, ly2, x, y) {
     lenSq = 0;
   }
   return lenSq;
-}
+};
+
+BubbleSet.addPadding = function(rects, radius) {
+  return rects.map(function(r) {
+    return {
+      "x": r["x"] - radius,
+      "y": r["y"] - radius,
+      "width": r["width"] + 2*radius,
+      "height": r["height"] + 2*radius,
+    };
+  });
+};
 
 function PointPath(_points) {
   var that = this;
@@ -1492,7 +1503,7 @@ function ShapeSimplifier(_tolerance) {
       var p = path.get(ix);
       var s = sthat.startPoint();
       var e = sthat.endPoint();
-      return linePtSegDistSq(s[0], s[1], e[0], e[1], p[0], p[1]);
+      return BubbleSet.linePtSegDistSq(s[0], s[1], e[0], e[1], p[0], p[1]);
     };
     this.canTakeNext = function() {
       if(!sthat.validEnd()) return false;
