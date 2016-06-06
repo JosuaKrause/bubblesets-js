@@ -273,32 +273,7 @@ function BubbleSet() {
     };
   }; // Line
   Line.ptSegDistSq = function(lx1, ly1, lx2, ly2, x, y) {
-    // taken from JDK 8 java.awt.geom.Line2D#ptSegDistSq(double, double, double, double, double, double)
-    var x1 = lx1;
-    var y1 = ly1;
-    var x2 = lx2 - x1;
-    var y2 = ly2 - y1;
-    var px = x - x1;
-    var py = y - y1;
-    var dotprod = px * x2 + py * y2;
-    var projlenSq;
-    if(dotprod <= 0) {
-      projlenSq = 0;
-    } else {
-      px = x2 - px;
-      py = y2 - py;
-      dotprod = px * x2 + py * y2;
-      if(dotprod <= 0) {
-        projlenSq = 0;
-      } else {
-        projlenSq = dotprod * dotprod / (x2 * x2 + y2 * y2);
-      }
-    }
-    var lenSq = px * px + py * py - projlenSq;
-    if(lenSq < 0) {
-      lenSq = 0;
-    }
-    return lenSq;
+    return linePtSegDistSq(lx1, ly1, lx2, ly2, x, y);
   };
 
   function Area(width, height) {
@@ -1373,6 +1348,35 @@ BubbleSet.DEFAULT_NODE_R1 = 50;
 BubbleSet.DEFAULT_MORPH_BUFFER = BubbleSet.DEFAULT_NODE_R0;
 BubbleSet.DEFAULT_SKIP = 8;
 
+function linePtSegDistSq(lx1, ly1, lx2, ly2, x, y) {
+  // taken from JDK 8 java.awt.geom.Line2D#ptSegDistSq(double, double, double, double, double, double)
+  var x1 = lx1;
+  var y1 = ly1;
+  var x2 = lx2 - x1;
+  var y2 = ly2 - y1;
+  var px = x - x1;
+  var py = y - y1;
+  var dotprod = px * x2 + py * y2;
+  var projlenSq;
+  if(dotprod <= 0) {
+    projlenSq = 0;
+  } else {
+    px = x2 - px;
+    py = y2 - py;
+    dotprod = px * x2 + py * y2;
+    if(dotprod <= 0) {
+      projlenSq = 0;
+    } else {
+      projlenSq = dotprod * dotprod / (x2 * x2 + y2 * y2);
+    }
+  }
+  var lenSq = px * px + py * py - projlenSq;
+  if(lenSq < 0) {
+    lenSq = 0;
+  }
+  return lenSq;
+}
+
 function PointPath(_points) {
   var that = this;
   var arr = [];
@@ -1417,6 +1421,13 @@ function PointPath(_points) {
   this.isEmpty = function() {
     return !that.size();
   };
+  this.transform = function(ts) {
+    var path = that;
+    ts.forEach(function(t) {
+      path = t.apply(path);
+    });
+    return path;
+  };
 
   if(arguments.length && _points) {
     that.addAll(_points);
@@ -1440,3 +1451,82 @@ PointPath.prototype.toString = function() {
   }
   return outline;
 };
+
+function ShapeSimplifier(_tolerance) {
+  var that = this;
+  var tolerance = 0.0;
+  var tsqr = 0.0;
+  this.tolerance = function(_) {
+    if(!arguments.length) return tolerance;
+    tolerance = _;
+    tsqr = tolerance * tolerance;
+  };
+  this.isDisabled = function() {
+    return tolerance < 0.0;
+  };
+
+  function State(path, _start) {
+    var sthat = this;
+    var start = _start;
+    var end = _start + 1;
+
+    this.advanceEnd = function() {
+      end += 1;
+    };
+    this.decreaseEnd = function() {
+      end -= 1;
+    };
+    this.end = function() {
+      return end;
+    };
+    this.validEnd = function() {
+      return path.closed() ? end < path.size() : end < path.size() - 1;
+    };
+    this.endPoint = function() {
+      return path.get(end);
+    };
+    this.startPoint = function() {
+      return path.get(start);
+    };
+    this.lineDstSqr = function(ix) {
+      var p = path.get(ix);
+      var s = sthat.startPoint();
+      var e = sthat.endPoint();
+      return linePtSegDistSq(s[0], s[1], e[0], e[1], p[0], p[1]);
+    };
+    this.canTakeNext = function() {
+      if(!sthat.validEnd()) return false;
+      var ok = true;
+      sthat.advanceEnd();
+      for(var ix = start + 1;ix < end;ix += 1) {
+        if(sthat.lineDstSqr(ix) > tsqr) {
+          ok = false;
+          break;
+        }
+      }
+      sthat.decreaseEnd();
+      return ok;
+    };
+  } // State
+
+  this.apply = function(path) {
+    if(that.isDisabled() || path.size() < 3) return path;
+    var states = [];
+    var start = 0;
+    while(start < path.size()) {
+      var s = new State(path, start);
+      while(s.canTakeNext()) {
+        s.advanceEnd();
+      }
+      start = s.end();
+      states.push(s);
+    }
+    return new PointPath(states.map(function(s) {
+      return s.startPoint();
+    }));
+  };
+
+  if(arguments.length) {
+    that.tolerance(_tolerance);
+  }
+} // ShapeSimplifier
