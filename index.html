@@ -70,6 +70,8 @@ function start() {
     // lines can be null to infer lines between rectangles automatically
     var outline = new PointPath(list).transform([
       new ShapeSimplifier(),
+      new BSplineShapeGenerator(),
+      new ShapeSimplifier(),
     ]);
     // outline is a path that can be used for the attribute d of a path element
     attr(path, {

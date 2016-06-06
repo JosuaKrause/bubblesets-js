@@ -21,6 +21,8 @@ var list = bubbles.createOutline(rectangles, otherRectangles, null /* lines */);
 // lines can be null to infer lines between rectangles automatically
 var outline = new PointPath(list).transform([
   new ShapeSimplifier(),
+  new BSplineShapeGenerator(),
+  new ShapeSimplifier(),
 ]);
 // outline is a path that can be used for the attribute d of a SVG path element
 ```

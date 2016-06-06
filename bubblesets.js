@@ -1530,3 +1530,69 @@ function ShapeSimplifier(_tolerance) {
     that.tolerance(_tolerance);
   }
 } // ShapeSimplifier
+
+function BSplineShapeGenerator() {
+  // since the basic function is fixed this value should not be changed
+  var ORDER = 3;
+  var START_INDEX = ORDER - 1;
+  var REL_END = 1;
+  var REL_START = REL_END - ORDER;
+
+  var that = this;
+  var clockwise = true;
+  var granularity = 6.0;
+  this.granularity = function(_) {
+    if(!arguments.length) return granularity;
+    granularity = _;
+  };
+
+  function basicFunction(i, t) {
+    // the basis function for a cubic B spline
+    switch(i) {
+      case -2:
+        return (((-t + 3.0) * t - 3.0) * t + 1.0) / 6.0;
+      case -1:
+        return (((3.0 * t - 6.0) * t) * t + 4.0) / 6.0;
+      case 0:
+        return (((-3.0 * t + 3.0) * t + 3.0) * t + 1.0) / 6.0;
+      case 1:
+        return (t * t * t) / 6.0;
+      default:
+        console.warn("internal error!");
+    }
+  }
+
+  function getRelativeIndex(index, relIndex) {
+    return index + (clockwise ? relIndex : -relIndex);
+  }
+
+  // evaluates a point on the B spline
+  function calcPoint(path, i, t) {
+    var px = 0.0;
+    var py = 0.0;
+    for(var j = REL_START;j <= REL_END;j += 1) {
+      var p = path.get(getRelativeIndex(i, j));
+      var bf = basicFunction(j, t);
+      px += bf * p[0];
+      py += bf * p[1];
+    }
+    return [ px, py ];
+  }
+
+  this.apply = function(path) {
+    // covering special cases
+    if(path.size() < 3) return path;
+    // actual b-spline calculation
+    var res = new PointPath();
+    var count = path.size() + ORDER - 1;
+    var g = that.granularity();
+    var closed = path.closed();
+    res.add(calcPoint(path, START_INDEX - (closed ? 0 : 2), 0));
+    for(var ix = START_INDEX - (closed ? 0 : 2);ix < count + (closed ? 0 : 2);ix += 1) {
+      for(var k = 1;k <= g;k += 1) {
+        res.add(calcPoint(path, ix, k / g));
+      }
+    }
+    return res;
+  };
+} // BSplineShapeGenerator
