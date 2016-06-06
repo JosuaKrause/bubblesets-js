@@ -227,10 +227,10 @@ function BubbleSet() {
     var p2 = _p2;
 
     this.rect = function() {
-      var minX = Math.min(p1.x(), p2.x());
-      var minY = Math.min(p1.y(), p2.y());
-      var maxX = Math.max(p1.x(), p2.x());
-      var maxY = Math.max(p1.y(), p2.y());
+      var minX = Math.min(that.x1(), that.x2());
+      var minY = Math.min(that.y1(), that.y2());
+      var maxX = Math.max(that.x1(), that.x2());
+      var maxY = Math.max(that.y1(), that.y2());
       var res = new Rectangle({
         x: minX,
         y: minY,
@@ -275,12 +275,16 @@ function BubbleSet() {
       return x <= cross;
     };
     this.ptSegDistSq = function(x, y) {
-      return Line.ptSegDistSq(that.x1(), that.y1(), that.x2(), that.y2(), x, y);
+      return BubbleSet.linePtSegDistSq(that.x1(), that.y1(), that.x2(), that.y2(), x, y);
+    };
+    this.ptClose = function(x, y, r) {
+      if(x < Math.min(that.x1(), that.x2()) - r) return false;
+      if(y < Math.min(that.y1(), that.y2()) - r) return false;
+      if(x > Math.max(that.x1(), that.x2()) + r) return false;
+      if(y > Math.max(that.y1(), that.y2()) + r) return false;
+      return true;
     };
   }; // Line
-  Line.ptSegDistSq = function(lx1, ly1, lx2, ly2, x, y) {
-    return BubbleSet.linePtSegDistSq(lx1, ly1, lx2, ly2, x, y);
-  };
 
   function Area(width, height) {
     var size = width * height;
@@ -1147,6 +1151,8 @@ function BubbleSet() {
         var tempY = y * pixelGroup + activeRegion.minY();
         var minDistanceSq = Number.POSITIVE_INFINITY;
         lines.forEach(function(line) {
+          // ignore lines where the point is further than a radius from the boudning rectangle
+          if(!line.ptClose(tempX, tempY, r1)) return;
           // use squared distance for comparison
           var distanceSq = line.ptSegDistSq(tempX, tempY);
           if(distanceSq < minDistanceSq) {
@@ -1200,7 +1206,7 @@ function BubbleSet() {
                 distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.minY());
               } else {
                 // distance from top line segment
-                distanceSq = Line.ptSegDistSq(rect.minX(), rect.minY(), rect.maxX(), rect.minY(), tempX, tempY);
+                distanceSq = BubbleSet.linePtSegDistSq(rect.minX(), rect.minY(), rect.maxX(), rect.minY(), tempX, tempY);
               }
             }
           } else {
@@ -1217,19 +1223,19 @@ function BubbleSet() {
                   distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.maxY());
                 } else {
                   // distance from bottom line segment
-                  distanceSq = Line.ptSegDistSq(rect.minX(), rect.maxY(), rect.maxX(), rect.maxY(), tempX, tempY);
+                  distanceSq = BubbleSet.linePtSegDistSq(rect.minX(), rect.maxY(), rect.maxX(), rect.maxY(), tempX, tempY);
                 }
               }
             } else {
               // left only
               if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
                 // linear distance from left edge
-                distanceSq = Line.ptSegDistSq(rect.minX(), rect.minY(), rect.minX(), rect.maxY(), tempX, tempY);
+                distanceSq = BubbleSet.linePtSegDistSq(rect.minX(), rect.minY(), rect.minX(), rect.maxY(), tempX, tempY);
               } else {
                 // right only
                 if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
                   // linear distance from right edge
-                  distanceSq = Line.ptSegDistSq(rect.maxX(), rect.minY(), rect.maxX(), rect.maxY(), tempX, tempY);
+                  distanceSq = BubbleSet.linePtSegDistSq(rect.maxX(), rect.minY(), rect.maxX(), rect.maxY(), tempX, tempY);
                 }
               }
             }
