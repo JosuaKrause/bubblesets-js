@@ -641,7 +641,7 @@ function BubbleSet() {
     });
 
     // calculate and store virtual edges
-    thatBS.calculateVirtualEdges(memberItems, nonMembers);
+    calculateVirtualEdges(memberItems, nonMembers);
 
     edges && edges.forEach(function(e) {
       virtualEdges.push(new Line(new Point(e.x1, e.y1), new Point(e.x2, e.y2)));
@@ -680,10 +680,10 @@ function BubbleSet() {
     var iterations = 0;
 
     // add the aggregate and all it's members and virtual edges
-    thatBS.fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
+    fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
 
     // try to march, check if surface contains all items
-    while((!thatBS.calculateContour(surface, activeRegion, memberItems, nonMembers, potentialArea)) && (iterations < maxMarchingIterations)) {
+    while((!calculateContour(surface, activeRegion, memberItems, nonMembers, potentialArea)) && (iterations < maxMarchingIterations)) {
       surface.clear();
       iterations += 1;
 
@@ -693,7 +693,7 @@ function BubbleSet() {
         threshold *= 0.95;
         nodeInfluenceFactor *= 1.2;
         edgeInfluenceFactor *= 1.2;
-        thatBS.fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
+        fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
       }
 
       // after half the iterations, start increasing positive energy and lowering the threshold
@@ -701,7 +701,7 @@ function BubbleSet() {
         if(negativeNodeInfluenceFactor != 0) {
           threshold *= 0.95;
           negativeNodeInfluenceFactor *= 0.8;
-          thatBS.fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
+          fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
         }
       }
     }
@@ -767,12 +767,14 @@ function BubbleSet() {
     }
     return rects;
   };
-  this.calculateContour = function(contour, bounds, members, nonMembers, potentialArea) {
+
+  function calculateContour(contour, bounds, members, nonMembers, potentialArea) {
     // if no surface could be found stop
     if(!new MarchingSquares(contour, potentialArea, pixelGroup, threshold).march()) return false;
-    return thatBS.testContainment(contour, bounds, members, nonMembers)[0];
-  };
-  this.testContainment = function(contour, bounds, members, nonMembers) {
+    return testContainment(contour, bounds, members, nonMembers)[0];
+  }
+
+  function testContainment(contour, bounds, members, nonMembers) {
     // precise bounds checking
     // copy hull values
     var g = [];
@@ -861,8 +863,9 @@ function BubbleSet() {
       });
     }
     return [ containsAll, containsExtra ];
-  };
-  this.fillPotentialArea = function(activeArea, members, nonMembers, potentialArea) {
+  }
+
+  function fillPotentialArea(activeArea, members, nonMembers, potentialArea) {
     var influenceFactor = 0;
     // add all positive energy (included items) first, as negative energy
     // (morphing) requires all positives to be already set
@@ -901,8 +904,9 @@ function BubbleSet() {
         }
       });
     }
-  };
-  this.calculateCentroidDistances = function(items) {
+  }
+
+  function calculateCentroidDistances(items) {
     var totalx = 0;
     var totaly = 0;
     var nodeCount = 0;
@@ -918,17 +922,18 @@ function BubbleSet() {
       var diffY = totaly - item.centerY();
       item.centroidDistance(Math.sqrt(diffX * diffX + diffY * diffY));
     });
-  };
-  this.calculateVirtualEdges = function(items, nonMembers) {
+  }
+
+  function calculateVirtualEdges(items, nonMembers) {
     var visited = [];
     virtualEdges = [];
-    thatBS.calculateCentroidDistances(items);
+    calculateCentroidDistances(items);
     items.sort(function(a, b) {
       return a.cmp(b);
     });
 
     items.forEach(function(item) {
-      var lines = thatBS.connectItem(nonMembers, item, visited);
+      var lines = connectItem(nonMembers, item, visited);
       lines.forEach(function(l) {
         virtualEdges.push(l);
       });
@@ -936,7 +941,7 @@ function BubbleSet() {
     });
   }
 
-  this.connectItem = function(nonMembers, item, visited) {
+  function connectItem(nonMembers, item, visited) {
     var scannedLines = [];
     var linesToCheck = [];
 
@@ -950,7 +955,7 @@ function BubbleSet() {
 
       var completeLine = new Line(itemCenter, nCenter);
       // augment distance by number of interfering items
-      var numberInterferenceItems = thatBS.countInterferenceItems(nonMembers, completeLine);
+      var numberInterferenceItems = countInterferenceItems(nonMembers, completeLine);
 
       // TODO is there a better function to consider interference in nearest-neighbour checking? This is hacky
       if(distanceSq * (numberInterferenceItems + 1) * (numberInterferenceItems + 1) < minLengthSq) {
@@ -976,23 +981,23 @@ function BubbleSet() {
         while(!hasIntersection && linesToCheck.length) {
           var line = linesToCheck.pop();
           // resolve intersections in order along edge
-          var closestItem = thatBS.getCenterItem(nonMembers, line);
+          var closestItem = getCenterItem(nonMembers, line);
           if(closestItem) {
             numIntersections = Intersection.testIntersection(line, closestItem, intersections);
             // 2 intersections = line passes through item
             if(numIntersections == 2) {
               var tempMorphBuffer = morphBuffer;
-              var movePoint = thatBS.rerouteLine(closestItem, tempMorphBuffer, intersections, true);
+              var movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, true);
               // test the movePoint already exists
-              var foundFirst = thatBS.pointExists(movePoint, linesToCheck) || thatBS.pointExists(movePoint, scannedLines);
-              var pointInside = thatBS.isPointInsideNonMember(movePoint, nonMembers);
+              var foundFirst = pointExists(movePoint, linesToCheck) || pointExists(movePoint, scannedLines);
+              var pointInside = isPointInsideNonMember(movePoint, nonMembers);
               // prefer first corner, even if buffer becomes very small
               while(!foundFirst && pointInside && (tempMorphBuffer >= 1)) {
                 // try a smaller buffer
                 tempMorphBuffer /= 1.5;
-                movePoint = thatBS.rerouteLine(closestItem, tempMorphBuffer, intersections, true);
-                foundFirst = thatBS.pointExists(movePoint, linesToCheck) || thatBS.pointExists(movePoint, scannedLines);
-                pointInside = thatBS.isPointInsideNonMember(movePoint, nonMembers);
+                movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, true);
+                foundFirst = pointExists(movePoint, linesToCheck) || pointExists(movePoint, scannedLines);
+                pointInside = isPointInsideNonMember(movePoint, nonMembers);
               }
 
               if(movePoint && (!foundFirst) && (!pointInside)) {
@@ -1007,16 +1012,16 @@ function BubbleSet() {
               // first corner, try the second
               if(!hasIntersection) {
                 tempMorphBuffer = morphBuffer;
-                movePoint = thatBS.rerouteLine(closestItem, tempMorphBuffer, intersections, false);
-                var foundSecond = thatBS.pointExists(movePoint, linesToCheck) || thatBS.pointExists(movePoint, scannedLines);
-                pointInside = thatBS.isPointInsideNonMember(movePoint, nonMembers);
+                movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, false);
+                var foundSecond = pointExists(movePoint, linesToCheck) || pointExists(movePoint, scannedLines);
+                pointInside = isPointInsideNonMember(movePoint, nonMembers);
                 // if both corners have been used, stop; otherwise gradually reduce buffer and try second corner
                 while(!foundSecond && pointInside && (tempMorphBuffer >= 1)) {
                   // try a smaller buffer
                   tempMorphBuffer /= 1.5;
-                  movePoint = thatBS.rerouteLine(closestItem, tempMorphBuffer, intersections, false);
-                  foundSecond = thatBS.pointExists(movePoint, linesToCheck) || thatBS.pointExists(movePoint, scannedLines);
-                  pointInside = thatBS.isPointInsideNonMember(movePoint, nonMembers);
+                  movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, false);
+                  foundSecond = pointExists(movePoint, linesToCheck) || pointExists(movePoint, scannedLines);
+                  pointInside = isPointInsideNonMember(movePoint, nonMembers);
                 }
 
                 if(movePoint && (!foundSecond)) {
@@ -1051,7 +1056,7 @@ function BubbleSet() {
           var line2 = scannedLines.pop();
           var mergeLine = new Line(line1.p1(), line2.p2());
           // resolve intersections in order along edge
-          var closestItem = thatBS.getCenterItem(nonMembers, mergeLine);
+          var closestItem = getCenterItem(nonMembers, mergeLine);
           // merge most recent line and previous line
           if(!closestItem) {
             scannedLines.push(mergeLine);
@@ -1066,13 +1071,15 @@ function BubbleSet() {
       scannedLines = linesToCheck;
     }
     return scannedLines;
-  };
-  this.isPointInsideNonMember = function(point, nonMembers) {
+  }
+
+  function isPointInsideNonMember(point, nonMembers) {
     return nonMembers.some(function(testRectangle) {
       return testRectangle.contains(point);
     });
-  };
-  this.pointExists = function(pointToCheck, lines) {
+  }
+
+  function pointExists(pointToCheck, lines) {
     var found = false;
     lines.forEach(function(checkEndPointsLine) {
       if(found) return;
@@ -1084,23 +1091,9 @@ function BubbleSet() {
       }
     });
     return found;
-  };
-  this.calculatePointInfluence = function(potentialArea, factor, r1, pointx, pointy) {
-    var p = new Point(pointx, pointy);
-    // for every point in potentialArea, calculate distance to point and add influence
-    for(var x = 0;x < potentialArea.width();x += 1) {
-      for(var y = 0;y < potentialArea.height();y += 1) {
-        var temp = new Point(x * pixelGroup, y * pixelGroup);
-        var distanceSq = p.distanceSq(temp);
-        // only influence if less than r1
-        if(distanceSq < r1 * r1) {
-          var dr = Math.sqrt(distanceSq) - r1;
-          potentialArea.set(x, y, potentialArea.get(x, y) + factor * dr * dr);
-        }
-      }
-    }
-  };
-  this.getCenterItem = function(items, testLine) {
+  }
+
+  function getCenterItem(items, testLine) {
     var minDistance = Number.POSITIVE_INFINITY;
     var closestItem = null;
 
@@ -1115,8 +1108,9 @@ function BubbleSet() {
       }
     });
     return closestItem;
-  };
-  this.countInterferenceItems = function(interferenceItems, testLine) {
+  }
+
+  function countInterferenceItems(interferenceItems, testLine) {
     var count = 0;
     interferenceItems.forEach(function(interferenceItem) {
       if(interferenceItem.intersectsLine(testLine)) {
@@ -1126,7 +1120,7 @@ function BubbleSet() {
       }
     });
     return count;
-  };
+  }
 
   function calculateLinesInfluence(potentialArea, influenceFactor, r1, lines, activeRegion) {
     lines.forEach(function(line) {
@@ -1268,7 +1262,7 @@ function BubbleSet() {
     }
   }
 
-  this.rerouteLine = function(rectangle, rerouteBuffer, intersections, wrapNormal) {
+  function rerouteLine(rectangle, rerouteBuffer, intersections, wrapNormal) {
     var topIntersect = intersections[0];
     var leftIntersect = intersections[1];
     var bottomIntersect = intersections[2];
@@ -1366,7 +1360,7 @@ function BubbleSet() {
       return new Point(rectangle.minX() - rerouteBuffer, rectangle.maxY() + rerouteBuffer);
     // top left
     return new Point(rectangle.minX() - rerouteBuffer, rectangle.minY() - rerouteBuffer);
-  };
+  }
 } // BubbleSet
 BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS = 100;
 BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS = 20;
