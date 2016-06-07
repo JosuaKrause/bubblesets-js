@@ -302,6 +302,10 @@ function BubbleSet() {
     var size = width * height;
     var buff = new Float32Array(size);
 
+    this.bound = function(pos, isX) {
+      if(pos < 0) return 0;
+      return Math.min(pos, (isX ? width : height) - 1);
+    };
     this.get = function(x, y) {
       if(x < 0 || x >= width || y < 0 || y >= height) return Number.NaN;
       return buff[x + y * width];
@@ -1131,13 +1135,13 @@ function BubbleSet() {
     lines.forEach(function(line) {
       var lr = line.rect();
       // only traverse the plausible area
-      var beginX = Math.floor((lr.minX() - r1 - activeRegion.minX()) / pixelGroup);
-      var stopX = Math.ceil((lr.maxX() + r1 - activeRegion.minX()) / pixelGroup);
-      var beginY = Math.floor((lr.minY() - r1 - activeRegion.minY()) / pixelGroup);
-      var stopY = Math.ceil((lr.maxY() + r1 - activeRegion.minY()) / pixelGroup);
+      var startX = potentialArea.bound(Math.floor((lr.minX() - r1 - activeRegion.minX()) / pixelGroup), true);
+      var startY = potentialArea.bound(Math.floor((lr.minY() - r1 - activeRegion.minY()) / pixelGroup), false);
+      var endX = potentialArea.bound(Math.ceil((lr.maxX() + r1 - activeRegion.minX()) / pixelGroup), true);
+      var endY = potentialArea.bound(Math.ceil((lr.maxY() + r1 - activeRegion.minY()) / pixelGroup), false);
       // for every point in active part of potentialArea, calculate distance to nearest point on line and add influence
-      for(var x = beginX;x < stopX;x += 1) {
-        for(var y = beginY;y < stopY;y += 1) {
+      for(var x = startX;x < endX;x += 1) {
+        for(var y = startY;y < endY;y += 1) {
           // if we are adding negative energy, skip if not already
           // positive; positives have already been added first, and adding
           // negative to <=0 will have no affect on surface
@@ -1159,10 +1163,10 @@ function BubbleSet() {
   };
   this.calculateRectangleInfluence = function(potentialArea, influenceFactor, r1, rect) {
     // find the affected subregion of potentialArea
-    var startX = Math.floor((rect.minX() - r1) / pixelGroup);
-    var startY = Math.floor((rect.minY() - r1) / pixelGroup);
-    var endX = Math.ceil((rect.maxX() + r1) / pixelGroup);
-    var endY = Math.ceil((rect.maxY() + r1) / pixelGroup);
+    var startX = potentialArea.bound(Math.floor((rect.minX() - r1) / pixelGroup), true);
+    var startY = potentialArea.bound(Math.floor((rect.minY() - r1) / pixelGroup), false);
+    var endX = potentialArea.bound(Math.ceil((rect.maxX() + r1) / pixelGroup), true);
+    var endY = potentialArea.bound(Math.ceil((rect.maxY() + r1) / pixelGroup), false);
     // for every point in active subregion of potentialArea, calculate
     // distance to nearest point on rectangle and add influence
     for(var x = startX;x < endX;x += 1) {
@@ -1196,7 +1200,7 @@ function BubbleSet() {
                 distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.minY());
               } else {
                 // distance from top line segment
-                distanceSq = BubbleSet.linePtSegDistSq(rect.minX(), rect.minY(), rect.maxX(), rect.minY(), tempX, tempY);
+                distanceSq = (rect.minY() - tempY) * (rect.minY() - tempY);
               }
             }
           } else {
@@ -1213,19 +1217,19 @@ function BubbleSet() {
                   distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.maxY());
                 } else {
                   // distance from bottom line segment
-                  distanceSq = BubbleSet.linePtSegDistSq(rect.minX(), rect.maxY(), rect.maxX(), rect.maxY(), tempX, tempY);
+                  distanceSq = (tempY - rect.maxY()) * (tempY - rect.maxY());
                 }
               }
             } else {
               // left only
               if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
                 // linear distance from left edge
-                distanceSq = BubbleSet.linePtSegDistSq(rect.minX(), rect.minY(), rect.minX(), rect.maxY(), tempX, tempY);
+                distanceSq = (rect.minX() - tempX) * (rect.minX() - tempX);
               } else {
                 // right only
                 if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
                   // linear distance from right edge
-                  distanceSq = BubbleSet.linePtSegDistSq(rect.maxX(), rect.minY(), rect.maxX(), rect.maxY(), tempX, tempY);
+                  distanceSq = (tempX - rect.maxX()) * (tempX - rect.maxX());
                 }
               }
             }
