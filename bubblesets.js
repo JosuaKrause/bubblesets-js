@@ -865,13 +865,7 @@ function BubbleSet() {
         var nodeRDiff = nodeR0 - nodeR1;
         // using inverse a for numerical stability
         var inva = nodeRDiff * nodeRDiff;
-        var r = new Rectangle({
-          x: item.minX() - activeArea.minX(),
-          y: item.minY() - activeArea.minY(),
-          width: item.width(),
-          height: item.height(),
-        });
-        thatBS.calculateRectangleInfluence(potentialArea, influenceFactor / inva, nodeR1, r);
+        calculateRectangleInfluence(potentialArea, influenceFactor / inva, nodeR1, item);
       }); // end processing node items of this aggregate
     } // end processing positive node energy
 
@@ -881,7 +875,7 @@ function BubbleSet() {
       var inva = ((edgeR0 - edgeR1) * (edgeR0 - edgeR1));
 
       if(virtualEdges.length > 0) {
-        thatBS.calculateLinesInfluence(potentialArea, influenceFactor / inva, edgeR1, virtualEdges, activeArea);
+        calculateLinesInfluence(potentialArea, influenceFactor / inva, edgeR1, virtualEdges, activeArea);
       }
     }
 
@@ -895,13 +889,7 @@ function BubbleSet() {
           var nodeRDiff = nodeR0 - nodeR1;
           // using inverse a for numerical stability
           var inva = nodeRDiff * nodeRDiff;
-          var r = new Rectangle({
-            x: item.minX() - activeArea.minX(),
-            y: item.minY() - activeArea.minY(),
-            width: item.width(),
-            height: item.height(),
-          });
-          thatBS.calculateRectangleInfluence(potentialArea, influenceFactor / inva, nodeR1, r);
+          calculateRectangleNegativeInfluence(potentialArea, influenceFactor / inva, nodeR1, item);
         }
       });
     }
@@ -1131,7 +1119,8 @@ function BubbleSet() {
     });
     return count;
   };
-  this.calculateLinesInfluence = function(potentialArea, influenceFactor, r1, lines, activeRegion) {
+
+  function calculateLinesInfluence(potentialArea, influenceFactor, r1, lines, activeRegion) {
     lines.forEach(function(line) {
       var lr = line.rect();
       // only traverse the plausible area
@@ -1160,81 +1149,79 @@ function BubbleSet() {
         }
       }
     });
-  };
-  this.calculateRectangleInfluence = function(potentialArea, influenceFactor, r1, rect) {
+  }
+
+  function getRectDistSq(rect, tempX, tempY) {
+    // test current point to see if it is inside rectangle
+    if(!rect.containsPt(tempX, tempY)) {
+      // which edge of rectangle is closest
+      var outcode = rect.outcode(tempX, tempY);
+      // top
+      if((outcode & Rectangle.OUT_TOP) === Rectangle.OUT_TOP) {
+        // and left
+        if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
+          // linear distance from upper left corner
+          return Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.minY());
+        } else {
+          // and right
+          if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
+            // linear distance from upper right corner
+            return Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.minY());
+          } else {
+            // distance from top line segment
+            return (rect.minY() - tempY) * (rect.minY() - tempY);
+          }
+        }
+      } else {
+        // bottom
+        if((outcode & Rectangle.OUT_BOTTOM) === Rectangle.OUT_BOTTOM) {
+          // and left
+          if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
+            // linear distance from lower left corner
+            return Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.maxY());
+          } else {
+            // and right
+            if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
+              // linear distance from lower right corner
+              return Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.maxY());
+            } else {
+              // distance from bottom line segment
+              return (tempY - rect.maxY()) * (tempY - rect.maxY());
+            }
+          }
+        } else {
+          // left only
+          if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
+            // linear distance from left edge
+            return (rect.minX() - tempX) * (rect.minX() - tempX);
+          } else {
+            // right only
+            if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
+              // linear distance from right edge
+              return (tempX - rect.maxX()) * (tempX - rect.maxX());
+            }
+          }
+        }
+      }
+    }
+    return 0;
+  }
+
+  function calculateRectangleInfluence(potentialArea, influenceFactor, r1, rect) {
+    influenceFactor < 0 && console.warn("expected positive influence", influenceFactor);
     // find the affected subregion of potentialArea
-    var startX = potentialArea.bound(Math.floor((rect.minX() - r1) / pixelGroup), true);
-    var startY = potentialArea.bound(Math.floor((rect.minY() - r1) / pixelGroup), false);
-    var endX = potentialArea.bound(Math.ceil((rect.maxX() + r1) / pixelGroup), true);
-    var endY = potentialArea.bound(Math.ceil((rect.maxY() + r1) / pixelGroup), false);
+    var startX = potentialArea.bound(Math.floor((rect.minX() - r1 - activeRegion.minX()) / pixelGroup), true);
+    var startY = potentialArea.bound(Math.floor((rect.minY() - r1 - activeRegion.minY()) / pixelGroup), false);
+    var endX = potentialArea.bound(Math.ceil((rect.maxX() + r1 - activeRegion.minX()) / pixelGroup), true);
+    var endY = potentialArea.bound(Math.ceil((rect.maxY() + r1 - activeRegion.minY()) / pixelGroup), false);
     // for every point in active subregion of potentialArea, calculate
     // distance to nearest point on rectangle and add influence
     for(var y = startY;y < endY;y += 1) {
       for(var x = startX;x < endX;x += 1) {
-        // if we are adding negative energy, skip if not already
-        // positive; positives have already been added first, and adding
-        // negative to <= 0 will have no affect on surface
-        if(influenceFactor < 0 && potentialArea.get(x, y) <= 0) {
-          continue;
-        }
         // convert back to screen coordinates
-        var tempX = x * pixelGroup;
-        var tempY = y * pixelGroup;
-        var distanceSq;
-        // test current point to see if it is inside rectangle
-        if(rect.containsPt(tempX, tempY)) {
-          distanceSq = 0;
-        } else {
-          // which edge of rectangle is closest
-          var outcode = rect.outcode(tempX, tempY);
-          // top
-          if((outcode & Rectangle.OUT_TOP) === Rectangle.OUT_TOP) {
-            // and left
-            if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
-              // linear distance from upper left corner
-              distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.minY());
-            } else {
-              // and right
-              if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
-                // linear distance from upper right corner
-                distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.minY());
-              } else {
-                // distance from top line segment
-                distanceSq = (rect.minY() - tempY) * (rect.minY() - tempY);
-              }
-            }
-          } else {
-            // bottom
-            if((outcode & Rectangle.OUT_BOTTOM) === Rectangle.OUT_BOTTOM) {
-              // and left
-              if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
-                // linear distance from lower left corner
-                distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.maxY());
-              } else {
-                // and right
-                if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
-                  // linear distance from lower right corner
-                  distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.maxY());
-                } else {
-                  // distance from bottom line segment
-                  distanceSq = (tempY - rect.maxY()) * (tempY - rect.maxY());
-                }
-              }
-            } else {
-              // left only
-              if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
-                // linear distance from left edge
-                distanceSq = (rect.minX() - tempX) * (rect.minX() - tempX);
-              } else {
-                // right only
-                if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
-                  // linear distance from right edge
-                  distanceSq = (tempX - rect.maxX()) * (tempX - rect.maxX());
-                }
-              }
-            }
-          }
-        }
+        var tempX = x * pixelGroup + activeRegion.minX();
+        var tempY = y * pixelGroup + activeRegion.minY();
+        var distanceSq = getRectDistSq(rect, tempX, tempY);
         // only influence if less than r1
         if(distanceSq < r1 * r1) {
           var dr = Math.sqrt(distanceSq) - r1;
@@ -1242,7 +1229,37 @@ function BubbleSet() {
         }
       }
     }
-  };
+  }
+
+  function calculateRectangleNegativeInfluence(potentialArea, influenceFactor, r1, rect) {
+    influenceFactor > 0 && console.warn("expected negative influence", influenceFactor);
+    // find the affected subregion of potentialArea
+    var startX = potentialArea.bound(Math.floor((rect.minX() - r1 - activeRegion.minX()) / pixelGroup), true);
+    var startY = potentialArea.bound(Math.floor((rect.minY() - r1 - activeRegion.minY()) / pixelGroup), false);
+    var endX = potentialArea.bound(Math.ceil((rect.maxX() + r1 - activeRegion.minX()) / pixelGroup), true);
+    var endY = potentialArea.bound(Math.ceil((rect.maxY() + r1 - activeRegion.minY()) / pixelGroup), false);
+    // for every point in active subregion of potentialArea, calculate
+    // distance to nearest point on rectangle and add influence
+    for(var y = startY;y < endY;y += 1) {
+      for(var x = startX;x < endX;x += 1) {
+        // skip if not already positive; positives have already been added first, and adding
+        // negative to <= 0 will have no affect on surface
+        if(potentialArea.get(x, y) <= 0) {
+          continue;
+        }
+        // convert back to screen coordinates
+        var tempX = x * pixelGroup + activeRegion.minX();
+        var tempY = y * pixelGroup + activeRegion.minY();
+        var distanceSq = getRectDistSq(rect, tempX, tempY);
+        // only influence if less than r1
+        if(distanceSq < r1 * r1) {
+          var dr = Math.sqrt(distanceSq) - r1;
+          potentialArea.set(x, y, potentialArea.get(x, y) + influenceFactor * dr * dr);
+        }
+      }
+    }
+  }
+
   this.rerouteLine = function(rectangle, rerouteBuffer, intersections, wrapNormal) {
     var topIntersect = intersections[0];
     var leftIntersect = intersections[1];
