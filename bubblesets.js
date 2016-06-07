@@ -1140,8 +1140,8 @@ function BubbleSet() {
       var endX = potentialArea.bound(Math.ceil((lr.maxX() + r1 - activeRegion.minX()) / pixelGroup), true);
       var endY = potentialArea.bound(Math.ceil((lr.maxY() + r1 - activeRegion.minY()) / pixelGroup), false);
       // for every point in active part of potentialArea, calculate distance to nearest point on line and add influence
-      for(var x = startX;x < endX;x += 1) {
-        for(var y = startY;y < endY;y += 1) {
+      for(var y = startY;y < endY;y += 1) {
+        for(var x = startX;x < endX;x += 1) {
           // if we are adding negative energy, skip if not already
           // positive; positives have already been added first, and adding
           // negative to <=0 will have no affect on surface
@@ -1169,8 +1169,8 @@ function BubbleSet() {
     var endY = potentialArea.bound(Math.ceil((rect.maxY() + r1) / pixelGroup), false);
     // for every point in active subregion of potentialArea, calculate
     // distance to nearest point on rectangle and add influence
-    for(var x = startX;x < endX;x += 1) {
-      for(var y = startY;y < endY;y += 1) {
+    for(var y = startY;y < endY;y += 1) {
+      for(var x = startX;x < endX;x += 1) {
         // if we are adding negative energy, skip if not already
         // positive; positives have already been added first, and adding
         // negative to <= 0 will have no affect on surface
