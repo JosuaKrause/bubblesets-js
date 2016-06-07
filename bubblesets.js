@@ -307,6 +307,7 @@ function BubbleSet() {
       return buff[x + y * width];
     };
     this.set = function(x, y, v) {
+      if(x < 0 || x >= width || y < 0 || y >= height) return;
       buff[x + y * width] = v;
     };
     this.width = function() {
@@ -1158,10 +1159,10 @@ function BubbleSet() {
   };
   this.calculateRectangleInfluence = function(potentialArea, influenceFactor, r1, rect) {
     // find the affected subregion of potentialArea
-    var startX = Math.min(Math.max(0, Math.floor((rect.minX() - r1) / pixelGroup)), potentialArea.width() - 1);
-    var startY = Math.min(Math.max(0, Math.floor((rect.minY() - r1) / pixelGroup)), potentialArea.height() - 1);
-    var endX = Math.min(potentialArea.width() - 1, Math.max(0, Math.floor((rect.maxX() + r1) / pixelGroup)));
-    var endY = Math.min(potentialArea.height(), Math.max(0, Math.floor((rect.maxY() + r1) / pixelGroup)));
+    var startX = Math.floor((rect.minX() - r1) / pixelGroup);
+    var startY = Math.floor((rect.minY() - r1) / pixelGroup);
+    var endX = Math.ceil((rect.maxX() + r1) / pixelGroup);
+    var endY = Math.ceil((rect.maxY() + r1) / pixelGroup);
     // for every point in active subregion of potentialArea, calculate
     // distance to nearest point on rectangle and add influence
     for(var x = startX;x < endX;x += 1) {
