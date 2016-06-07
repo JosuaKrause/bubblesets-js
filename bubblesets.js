@@ -1,6 +1,7 @@
 /**
  * Created by krause on 2014-10-25.
  */
+"use strict";
 
 function BubbleSet() {
   var thatBS = this;
@@ -20,10 +21,10 @@ function BubbleSet() {
         width: width,
         height: height
       };
-      x = r.x;
-      y = r.y;
-      width = r.width;
-      height = r.height;
+      x = +r.x;
+      y = +r.y;
+      width = +r.width;
+      height = +r.height;
     };
     this.minX = function() {
       return x;
@@ -150,8 +151,8 @@ function BubbleSet() {
   Rectangle.OUT_BOTTOM = 8;
 
   function Point(ax, ay) {
-    var x = ax;
-    var y = ay;
+    var x = +ax;
+    var y = +ay;
     this.x = function(_) {
       if(!arguments.length) return x;
       x = _;
@@ -170,8 +171,8 @@ function BubbleSet() {
   Point.ptsDistanceSq = function(x1, y1, x2, y2) {
     return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
   };
-  Point.doublePointsEqual = function(p1, p2, delta) {
-    return p1.distanceSq(p2) < delta * delta;
+  Point.doublePointsEqual = function(x1, y1, x2, y2, delta) {
+    return Point.ptsDistanceSq(x1, y1, x2, y2) < delta * delta;
   };
 
   function PointList(size) {
@@ -221,16 +222,18 @@ function BubbleSet() {
     };
   }; // PointList
 
-  function Line(_p1, _p2) {
+  function Line(_x1, _y1, _x2, _y2) {
     var that = this;
-    var p1 = _p1;
-    var p2 = _p2;
+    var x1 = +_x1;
+    var y1 = +_y1;
+    var x2 = +_x2;
+    var y2 = +_y2;
 
     this.rect = function() {
-      var minX = Math.min(p1.x(), p2.x());
-      var minY = Math.min(p1.y(), p2.y());
-      var maxX = Math.max(p1.x(), p2.x());
-      var maxY = Math.max(p1.y(), p2.y());
+      var minX = Math.min(x1, x2);
+      var minY = Math.min(y1, y2);
+      var maxX = Math.max(x1, x2);
+      var maxY = Math.max(y1, y2);
       var res = new Rectangle({
         x: minX,
         y: minY,
@@ -239,58 +242,72 @@ function BubbleSet() {
       });
       return res;
     }
-    this.x1 = function() {
-      return p1.x();
+    this.x1 = function(_) {
+      if(!arguments.length) return x1;
+      x1 = _;
     };
-    this.x2 = function() {
-      return p2.x();
+    this.x2 = function(_) {
+      if(!arguments.length) return x2;
+      x2 = _;
     };
-    this.y1 = function() {
-      return p1.y();
+    this.y1 = function(_) {
+      if(!arguments.length) return y1;
+      y1 = _;
     };
-    this.y2 = function() {
-      return p2.y();
-    };
-    this.p1 = function(_p1) {
-      if(!arguments.length) return p1;
-      p1 = _p1;
-    };
-    this.p2 = function(_p2) {
-      if(!arguments.length) return p2;
-      p2 = _p2;
+    this.y2 = function(_) {
+      if(!arguments.length) return y2;
+      y2 = _;
     };
     // whether an infinite line to positive x from the point p will cut through the line
     this.cuts = function(p) {
-      var y1 = that.y1();
-      var y2 = that.y2();
-      if(y1 == y2) return false;
+      if(y1 === y2) return false;
       var y = p.y();
       if((y < y1 && y <= y2) || (y > y1 && y >= y2)) return false;
       var x = p.x();
-      var x1 = that.x1();
-      var x2 = that.x2();
       if(x > x1 && x >= x2) return false;
       if(x < x1 && x <= x2) return true;
       var cross = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
       return x <= cross;
     };
     this.ptSegDistSq = function(x, y) {
-      return Line.ptSegDistSq(that.x1(), that.y1(), that.x2(), that.y2(), x, y);
+      return BubbleSet.linePtSegDistSq(x1, y1, x2, y2, x, y);
+    };
+    this.ptClose = function(x, y, r) {
+      // check whether the point is outside the bounding rectangle with padding r
+      if(x1 < x2) {
+        if(x < x1 - r || x > x2 + r) return false;
+      } else {
+        if(x < x2 - r || x > x1 + r) return false;
+      }
+      if(y1 < y2) {
+        if(y < y1 - r || y > y2 + r) return false;
+      } else {
+        if(y < y2 - r || y > y1 + r) return false;
+      }
+      return true;
     };
   }; // Line
-  Line.ptSegDistSq = function(lx1, ly1, lx2, ly2, x, y) {
-    return BubbleSet.linePtSegDistSq(lx1, ly1, lx2, ly2, x, y);
-  };
 
   function Area(width, height) {
     var size = width * height;
     var buff = new Float32Array(size);
 
+    this.bound = function(pos, isX) {
+      if(pos < 0) return 0;
+      return Math.min(pos, (isX ? width : height) - 1);
+    };
     this.get = function(x, y) {
-      if(x < 0 || x >= width || y < 0 || y >= height) return Number.NaN;
+      if(x < 0 || x >= width || y < 0 || y >= height) {
+        console.warn("Area.get out of bounds", x, y, width, height);
+        return Number.NaN;
+      }
       return buff[x + y * width];
     };
     this.set = function(x, y, v) {
+      if(x < 0 || x >= width || y < 0 || y >= height) {
+        console.warn("Area.set out of bounds", x, y, width, height);
+        return;
+      }
       buff[x + y * width] = v;
     };
     this.width = function() {
@@ -350,12 +367,18 @@ function BubbleSet() {
     }
     return Number.POSITIVE_INFINITY;
   };
+  // we can move them out here since there can't be any concurrency
+  var intersectionPline = new Line(0.0, 0.0, 0.0, 0.0);
   Intersection.fractionToLineCenter = function(bounds, line) {
     var minDistance = Number.POSITIVE_INFINITY;
     var countIntersections = 0;
 
     function testLine(xa, ya, xb, yb) {
-      var testDistance = Intersection.fractionAlongLineA(line, new Line(new Point(xa, ya), new Point(xb, yb)));
+      intersectionPline.x1(xa);
+      intersectionPline.y1(ya);
+      intersectionPline.x2(xb);
+      intersectionPline.y2(yb);
+      var testDistance = Intersection.fractionAlongLineA(line, intersectionPline);
       testDistance = Math.abs(testDistance - 0.5);
       if((testDistance >= 0) && (testDistance <= 1)) {
         countIntersections += 1;
@@ -384,7 +407,7 @@ function BubbleSet() {
     var countIntersections = 0;
 
     function testLine(xa, ya, xb, yb) {
-      var testDistance = Intersection.fractionAlongLineA(line, new Line(new Point(xa, ya), new Point(xb, yb)));
+      var testDistance = Intersection.fractionAlongLineA(line, new Line(xa, ya, xb, yb));
       if((testDistance >= 0) && (testDistance <= 1)) {
         countIntersections += 1;
         if(testDistance < minDistance) {
@@ -411,7 +434,7 @@ function BubbleSet() {
     var countIntersections = 0;
 
     function fillIntersection(ix, xa, ya, xb, yb) {
-      intersections[ix] = Intersection.intersectLineLine(line, new Line(new Point(xa, ya), new Point(xb, yb)));
+      intersections[ix] = Intersection.intersectLineLine(line, new Line(xa, ya, xb, yb));
       if(intersections[ix].getState == Intersection.POINT) {
         countIntersections += 1;
       }
@@ -612,10 +635,10 @@ function BubbleSet() {
     });
 
     // calculate and store virtual edges
-    thatBS.calculateVirtualEdges(memberItems, nonMembers);
+    calculateVirtualEdges(memberItems, nonMembers);
 
     edges && edges.forEach(function(e) {
-      virtualEdges.push(new Line(new Point(e.x1, e.y1), new Point(e.x2, e.y2)));
+      virtualEdges.push(new Line(e.x1, e.y1, e.x2, e.y2));
     });
 
     activeRegion = null;
@@ -651,10 +674,10 @@ function BubbleSet() {
     var iterations = 0;
 
     // add the aggregate and all it's members and virtual edges
-    thatBS.fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
+    fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
 
     // try to march, check if surface contains all items
-    while((!thatBS.calculateContour(surface, activeRegion, memberItems, nonMembers, potentialArea)) && (iterations < maxMarchingIterations)) {
+    while((!calculateContour(surface, activeRegion, memberItems, nonMembers, potentialArea)) && (iterations < maxMarchingIterations)) {
       surface.clear();
       iterations += 1;
 
@@ -664,7 +687,7 @@ function BubbleSet() {
         threshold *= 0.95;
         nodeInfluenceFactor *= 1.2;
         edgeInfluenceFactor *= 1.2;
-        thatBS.fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
+        fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
       }
 
       // after half the iterations, start increasing positive energy and lowering the threshold
@@ -672,7 +695,7 @@ function BubbleSet() {
         if(negativeNodeInfluenceFactor != 0) {
           threshold *= 0.95;
           negativeNodeInfluenceFactor *= 0.8;
-          thatBS.fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
+          fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
         }
       }
     }
@@ -738,12 +761,14 @@ function BubbleSet() {
     }
     return rects;
   };
-  this.calculateContour = function(contour, bounds, members, nonMembers, potentialArea) {
+
+  function calculateContour(contour, bounds, members, nonMembers, potentialArea) {
     // if no surface could be found stop
     if(!new MarchingSquares(contour, potentialArea, pixelGroup, threshold).march()) return false;
-    return thatBS.testContainment(contour, bounds, members, nonMembers)[0];
-  };
-  this.testContainment = function(contour, bounds, members, nonMembers) {
+    return testContainment(contour, bounds, members, nonMembers)[0];
+  }
+
+  function testContainment(contour, bounds, members, nonMembers) {
     // precise bounds checking
     // copy hull values
     var g = [];
@@ -755,19 +780,23 @@ function BubbleSet() {
       var crossings = 0;
       g.forEach(function(cur) {
         if(!line) {
-          line = new Line(cur, cur);
+          line = new Line(cur.x(), cur.y(), cur.x(), cur.y());
           first = cur;
           return;
         }
-        line.p1(line.p2());
-        line.p2(cur);
+        line.x1(line.x2());
+        line.y1(line.y2());
+        line.x2(cur.x());
+        line.y2(cur.y());
         if(line.cuts(p)) {
           crossings += 1;
         }
       });
       if(first) {
-        line.p1(line.p2());
-        line.p2(first);
+        line.x1(line.x2());
+        line.y1(line.y2());
+        line.x2(first.x());
+        line.y2(first.y());
         if(line.cuts(p)) {
           crossings += 1;
         }
@@ -832,8 +861,9 @@ function BubbleSet() {
       });
     }
     return [ containsAll, containsExtra ];
-  };
-  this.fillPotentialArea = function(activeArea, members, nonMembers, potentialArea) {
+  }
+
+  function fillPotentialArea(activeArea, members, nonMembers, potentialArea) {
     var influenceFactor = 0;
     // add all positive energy (included items) first, as negative energy
     // (morphing) requires all positives to be already set
@@ -844,13 +874,7 @@ function BubbleSet() {
         var nodeRDiff = nodeR0 - nodeR1;
         // using inverse a for numerical stability
         var inva = nodeRDiff * nodeRDiff;
-        var r = new Rectangle({
-          x: item.minX() - activeArea.minX(),
-          y: item.minY() - activeArea.minY(),
-          width: item.width(),
-          height: item.height(),
-        });
-        thatBS.calculateRectangleInfluence(potentialArea, influenceFactor / inva, nodeR1, r);
+        calculateRectangleInfluence(potentialArea, influenceFactor / inva, nodeR1, item);
       }); // end processing node items of this aggregate
     } // end processing positive node energy
 
@@ -860,7 +884,7 @@ function BubbleSet() {
       var inva = ((edgeR0 - edgeR1) * (edgeR0 - edgeR1));
 
       if(virtualEdges.length > 0) {
-        thatBS.calculateLinesInfluence(potentialArea, influenceFactor / inva, edgeR1, virtualEdges, activeArea);
+        calculateLinesInfluence(potentialArea, influenceFactor / inva, edgeR1, virtualEdges, activeArea);
       }
     }
 
@@ -874,18 +898,13 @@ function BubbleSet() {
           var nodeRDiff = nodeR0 - nodeR1;
           // using inverse a for numerical stability
           var inva = nodeRDiff * nodeRDiff;
-          var r = new Rectangle({
-            x: item.minX() - activeArea.minX(),
-            y: item.minY() - activeArea.minY(),
-            width: item.width(),
-            height: item.height(),
-          });
-          thatBS.calculateRectangleInfluence(potentialArea, influenceFactor / inva, nodeR1, r);
+          calculateRectangleNegativeInfluence(potentialArea, influenceFactor / inva, nodeR1, item);
         }
       });
     }
-  };
-  this.calculateCentroidDistances = function(items) {
+  }
+
+  function calculateCentroidDistances(items) {
     var totalx = 0;
     var totaly = 0;
     var nodeCount = 0;
@@ -901,17 +920,18 @@ function BubbleSet() {
       var diffY = totaly - item.centerY();
       item.centroidDistance(Math.sqrt(diffX * diffX + diffY * diffY));
     });
-  };
-  this.calculateVirtualEdges = function(items, nonMembers) {
+  }
+
+  function calculateVirtualEdges(items, nonMembers) {
     var visited = [];
     virtualEdges = [];
-    thatBS.calculateCentroidDistances(items);
+    calculateCentroidDistances(items);
     items.sort(function(a, b) {
       return a.cmp(b);
     });
 
     items.forEach(function(item) {
-      var lines = thatBS.connectItem(nonMembers, item, visited);
+      var lines = connectItem(nonMembers, item, visited);
       lines.forEach(function(l) {
         virtualEdges.push(l);
       });
@@ -919,7 +939,7 @@ function BubbleSet() {
     });
   }
 
-  this.connectItem = function(nonMembers, item, visited) {
+  function connectItem(nonMembers, item, visited) {
     var scannedLines = [];
     var linesToCheck = [];
 
@@ -931,9 +951,9 @@ function BubbleSet() {
       var nCenter = new Point(neighbourItem.centerX(), neighbourItem.centerY());
       var distanceSq = itemCenter.distanceSq(nCenter);
 
-      var completeLine = new Line(itemCenter, nCenter);
+      var completeLine = new Line(itemCenter.x(), itemCenter.y(), nCenter.x(), nCenter.y());
       // augment distance by number of interfering items
-      var numberInterferenceItems = thatBS.countInterferenceItems(nonMembers, completeLine);
+      var numberInterferenceItems = countInterferenceItems(nonMembers, completeLine);
 
       // TODO is there a better function to consider interference in nearest-neighbour checking? This is hacky
       if(distanceSq * (numberInterferenceItems + 1) * (numberInterferenceItems + 1) < minLengthSq) {
@@ -945,7 +965,7 @@ function BubbleSet() {
     // if there is a visited closest neighbour, add straight line between
     // them to the positive energy to ensure connected clusters
     if(closestNeighbour) {
-      var completeLine = new Line(itemCenter, new Point(closestNeighbour.centerX(), closestNeighbour.centerY()));
+      var completeLine = new Line(itemCenter.x(), itemCenter.y(), closestNeighbour.centerX(), closestNeighbour.centerY());
       // route the edge around intersecting nodes not in set
       linesToCheck.push(completeLine);
 
@@ -959,29 +979,29 @@ function BubbleSet() {
         while(!hasIntersection && linesToCheck.length) {
           var line = linesToCheck.pop();
           // resolve intersections in order along edge
-          var closestItem = thatBS.getCenterItem(nonMembers, line);
+          var closestItem = getCenterItem(nonMembers, line);
           if(closestItem) {
             numIntersections = Intersection.testIntersection(line, closestItem, intersections);
             // 2 intersections = line passes through item
             if(numIntersections == 2) {
               var tempMorphBuffer = morphBuffer;
-              var movePoint = thatBS.rerouteLine(closestItem, tempMorphBuffer, intersections, true);
+              var movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, true);
               // test the movePoint already exists
-              var foundFirst = thatBS.pointExists(movePoint, linesToCheck) || thatBS.pointExists(movePoint, scannedLines);
-              var pointInside = thatBS.isPointInsideNonMember(movePoint, nonMembers);
+              var foundFirst = pointExists(movePoint, linesToCheck) || pointExists(movePoint, scannedLines);
+              var pointInside = isPointInsideNonMember(movePoint, nonMembers);
               // prefer first corner, even if buffer becomes very small
               while(!foundFirst && pointInside && (tempMorphBuffer >= 1)) {
                 // try a smaller buffer
                 tempMorphBuffer /= 1.5;
-                movePoint = thatBS.rerouteLine(closestItem, tempMorphBuffer, intersections, true);
-                foundFirst = thatBS.pointExists(movePoint, linesToCheck) || thatBS.pointExists(movePoint, scannedLines);
-                pointInside = thatBS.isPointInsideNonMember(movePoint, nonMembers);
+                movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, true);
+                foundFirst = pointExists(movePoint, linesToCheck) || pointExists(movePoint, scannedLines);
+                pointInside = isPointInsideNonMember(movePoint, nonMembers);
               }
 
               if(movePoint && (!foundFirst) && (!pointInside)) {
                 // add 2 rerouted lines to check
-                linesToCheck.push(new Line(line.p1(), movePoint));
-                linesToCheck.push(new Line(movePoint, line.p2()));
+                linesToCheck.push(new Line(line.x1(), line.y1(), movePoint.x(), movePoint.y()));
+                linesToCheck.push(new Line(movePoint.x(), movePoint.y(), line.x2(), line.y2()));
                 // indicate intersection found
                 hasIntersection = true;
               }
@@ -990,22 +1010,22 @@ function BubbleSet() {
               // first corner, try the second
               if(!hasIntersection) {
                 tempMorphBuffer = morphBuffer;
-                movePoint = thatBS.rerouteLine(closestItem, tempMorphBuffer, intersections, false);
-                var foundSecond = thatBS.pointExists(movePoint, linesToCheck) || thatBS.pointExists(movePoint, scannedLines);
-                pointInside = thatBS.isPointInsideNonMember(movePoint, nonMembers);
+                movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, false);
+                var foundSecond = pointExists(movePoint, linesToCheck) || pointExists(movePoint, scannedLines);
+                pointInside = isPointInsideNonMember(movePoint, nonMembers);
                 // if both corners have been used, stop; otherwise gradually reduce buffer and try second corner
                 while(!foundSecond && pointInside && (tempMorphBuffer >= 1)) {
                   // try a smaller buffer
                   tempMorphBuffer /= 1.5;
-                  movePoint = thatBS.rerouteLine(closestItem, tempMorphBuffer, intersections, false);
-                  foundSecond = thatBS.pointExists(movePoint, linesToCheck) || thatBS.pointExists(movePoint, scannedLines);
-                  pointInside = thatBS.isPointInsideNonMember(movePoint, nonMembers);
+                  movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, false);
+                  foundSecond = pointExists(movePoint, linesToCheck) || pointExists(movePoint, scannedLines);
+                  pointInside = isPointInsideNonMember(movePoint, nonMembers);
                 }
 
                 if(movePoint && (!foundSecond)) {
                   // add 2 rerouted lines to check
-                  linesToCheck.push(new Line(line.p1(), movePoint));
-                  linesToCheck.push(new Line(movePoint, line.p2()));
+                  linesToCheck.push(new Line(line.x1(), line.y1(), movePoint.x(), movePoint.y()));
+                  linesToCheck.push(new Line(movePoint.x(), movePoint.y(), line.x2(), line.y2()));
                   // indicate intersection found
                   hasIntersection = true;
                 }
@@ -1032,9 +1052,9 @@ function BubbleSet() {
         var line1 = scannedLines.pop();
         if(scannedLines.length) {
           var line2 = scannedLines.pop();
-          var mergeLine = new Line(line1.p1(), line2.p2());
+          var mergeLine = new Line(line1.x1(), line1.y1(), line2.x2(), line2.y2());
           // resolve intersections in order along edge
-          var closestItem = thatBS.getCenterItem(nonMembers, mergeLine);
+          var closestItem = getCenterItem(nonMembers, mergeLine);
           // merge most recent line and previous line
           if(!closestItem) {
             scannedLines.push(mergeLine);
@@ -1049,41 +1069,29 @@ function BubbleSet() {
       scannedLines = linesToCheck;
     }
     return scannedLines;
-  };
-  this.isPointInsideNonMember = function(point, nonMembers) {
+  }
+
+  function isPointInsideNonMember(point, nonMembers) {
     return nonMembers.some(function(testRectangle) {
       return testRectangle.contains(point);
     });
-  };
-  this.pointExists = function(pointToCheck, lines) {
+  }
+
+  function pointExists(pointToCheck, lines) {
     var found = false;
     lines.forEach(function(checkEndPointsLine) {
       if(found) return;
-      if(Point.doublePointsEqual(checkEndPointsLine.p1(), pointToCheck, 1e-3)) {
+      if(Point.doublePointsEqual(checkEndPointsLine.x1(), checkEndPointsLine.y1(), pointToCheck.x(), pointToCheck.y(), 1e-3)) {
         found = true;
       }
-      if(Point.doublePointsEqual(checkEndPointsLine.p2(), pointToCheck, 1e-3)) {
+      if(Point.doublePointsEqual(checkEndPointsLine.x2(), checkEndPointsLine.y2(), pointToCheck.x(), pointToCheck.y(), 1e-3)) {
         found = true;
       }
     });
     return found;
-  };
-  this.calculatePointInfluence = function(potentialArea, factor, r1, pointx, pointy) {
-    var p = new Point(pointx, pointy);
-    // for every point in potentialArea, calculate distance to point and add influence
-    for(var x = 0;x < potentialArea.width();x += 1) {
-      for(var y = 0;y < potentialArea.height();y += 1) {
-        var temp = new Point(x * pixelGroup, y * pixelGroup);
-        var distanceSq = p.distanceSq(temp);
-        // only influence if less than r1
-        if(distanceSq < r1 * r1) {
-          var dr = Math.sqrt(distanceSq) - r1;
-          potentialArea.set(x, y, potentialArea.get(x, y) + factor * dr * dr);
-        }
-      }
-    }
-  };
-  this.getCenterItem = function(items, testLine) {
+  }
+
+  function getCenterItem(items, testLine) {
     var minDistance = Number.POSITIVE_INFINITY;
     var closestItem = null;
 
@@ -1098,143 +1106,121 @@ function BubbleSet() {
       }
     });
     return closestItem;
-  };
-  this.countInterferenceItems = function(interferenceItems, testLine) {
-    var count = 0;
-    interferenceItems.forEach(function(interferenceItem) {
+  }
+
+  function countInterferenceItems(interferenceItems, testLine) {
+    return interferenceItems.reduce(function(count, interferenceItem) {
       if(interferenceItem.intersectsLine(testLine)) {
         if(Intersection.fractionToLineCenter(interferenceItem, testLine) >= 0) {
-          count += 1;
+          return count + 1;
         }
       }
-    });
-    return count;
-  };
-  this.calculateLinesInfluence = function(potentialArea, influenceFactor, r1, lines, activeRegion) {
-    var r = null;
-    // calculate active region for the lines
+      return count;
+    }, 0);
+  }
+
+  function calculateLinesInfluence(potentialArea, influenceFactor, r1, lines, activeRegion) {
     lines.forEach(function(line) {
-      if(!r) {
-        r = line.rect();
-      } else {
-        r.add(line.rect());
+      var lr = line.rect();
+      // only traverse the plausible area
+      var startX = potentialArea.bound(Math.floor((lr.minX() - r1 - activeRegion.minX()) / pixelGroup), true);
+      var startY = potentialArea.bound(Math.floor((lr.minY() - r1 - activeRegion.minY()) / pixelGroup), false);
+      var endX = potentialArea.bound(Math.ceil((lr.maxX() + r1 - activeRegion.minX()) / pixelGroup), true);
+      var endY = potentialArea.bound(Math.ceil((lr.maxY() + r1 - activeRegion.minY()) / pixelGroup), false);
+      // for every point in active part of potentialArea, calculate distance to nearest point on line and add influence
+      for(var y = startY;y < endY;y += 1) {
+        for(var x = startX;x < endX;x += 1) {
+          // if we are adding negative energy, skip if not already
+          // positive; positives have already been added first, and adding
+          // negative to <=0 will have no affect on surface
+          if(influenceFactor < 0 && potentialArea.get(x, y) <= 0) {
+            continue;
+          }
+          // convert back to screen coordinates
+          var tempX = x * pixelGroup + activeRegion.minX();
+          var tempY = y * pixelGroup + activeRegion.minY();
+          var minDistanceSq = line.ptSegDistSq(tempX, tempY);
+          // only influence if less than r1
+          if(minDistanceSq < r1 * r1) {
+            var mdr = Math.sqrt(minDistanceSq) - r1;
+            potentialArea.set(x, y, potentialArea.get(x, y) + influenceFactor * mdr * mdr);
+          }
+        }
       }
     });
-    if(!r) return;
-    // offset the rectangle by the bubble set bounds to put into 0, 0 space for potentialArea
-    r.rect({
-      x: r.minX() - activeRegion.minX(),
-      y: r.minY() - activeRegion.minY(),
-      width: r.width(),
-      height: r.height(),
-    });
-    // find the affected subregion of potentialArea
-    var startX = Math.min(Math.max(0, Math.floor((r.minX() - r1) / pixelGroup)), potentialArea.width() - 1);
-    var startY = Math.min(Math.max(0, Math.floor((r.minY() - r1) / pixelGroup)), potentialArea.height() - 1);
-    var endX = Math.min(potentialArea.width() - 1, Math.max(0, Math.floor((r.minX() + r.width() + r1) / pixelGroup)));
-    var endY = Math.min(potentialArea.height(), Math.max(0, Math.floor((r.minY() + r.height() + r1) / pixelGroup)));
-    // for every point in active part of potentialArea, calculate distance to nearest point on line and add influence
-    for(var x = startX;x < endX;x += 1) {
-      for(var y = startY;y < endY;y += 1) {
-        // if we are adding negative energy, skip if not already
-        // positive; positives have already been added first, and adding
-        // negative to <=0 will have no affect on surface
-        if(influenceFactor < 0 && potentialArea.get(x, y) <= 0) {
-          continue;
-        }
-        // convert back to screen coordinates
-        var tempX = x * pixelGroup + activeRegion.minX();
-        var tempY = y * pixelGroup + activeRegion.minY();
-        var minDistanceSq = Number.POSITIVE_INFINITY;
-        lines.forEach(function(line) {
-          // use squared distance for comparison
-          var distanceSq = line.ptSegDistSq(tempX, tempY);
-          if(distanceSq < minDistanceSq) {
-            minDistanceSq = distanceSq;
+  }
+
+  function getRectDistSq(rect, tempX, tempY) {
+    // test current point to see if it is inside rectangle
+    if(!rect.containsPt(tempX, tempY)) {
+      // which edge of rectangle is closest
+      var outcode = rect.outcode(tempX, tempY);
+      // top
+      if((outcode & Rectangle.OUT_TOP) === Rectangle.OUT_TOP) {
+        // and left
+        if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
+          // linear distance from upper left corner
+          return Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.minY());
+        } else {
+          // and right
+          if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
+            // linear distance from upper right corner
+            return Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.minY());
+          } else {
+            // distance from top line segment
+            return (rect.minY() - tempY) * (rect.minY() - tempY);
           }
-        });
-        // only influence if less than r1
-        if(minDistanceSq < r1 * r1) {
-          var mdr = Math.sqrt(minDistanceSq) - r1;
-          potentialArea.set(x, y, potentialArea.get(x, y) + influenceFactor * mdr * mdr);
+        }
+      } else {
+        // bottom
+        if((outcode & Rectangle.OUT_BOTTOM) === Rectangle.OUT_BOTTOM) {
+          // and left
+          if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
+            // linear distance from lower left corner
+            return Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.maxY());
+          } else {
+            // and right
+            if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
+              // linear distance from lower right corner
+              return Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.maxY());
+            } else {
+              // distance from bottom line segment
+              return (tempY - rect.maxY()) * (tempY - rect.maxY());
+            }
+          }
+        } else {
+          // left only
+          if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
+            // linear distance from left edge
+            return (rect.minX() - tempX) * (rect.minX() - tempX);
+          } else {
+            // right only
+            if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
+              // linear distance from right edge
+              return (tempX - rect.maxX()) * (tempX - rect.maxX());
+            }
+          }
         }
       }
     }
-  };
-  this.calculateRectangleInfluence = function(potentialArea, influenceFactor, r1, rect) {
+    return 0;
+  }
+
+  function calculateRectangleInfluence(potentialArea, influenceFactor, r1, rect) {
+    influenceFactor < 0 && console.warn("expected positive influence", influenceFactor);
     // find the affected subregion of potentialArea
-    var startX = Math.min(Math.max(0, Math.floor((rect.minX() - r1) / pixelGroup)), potentialArea.width() - 1);
-    var startY = Math.min(Math.max(0, Math.floor((rect.minY() - r1) / pixelGroup)), potentialArea.height() - 1);
-    var endX = Math.min(potentialArea.width() - 1, Math.max(0, Math.floor((rect.maxX() + r1) / pixelGroup)));
-    var endY = Math.min(potentialArea.height(), Math.max(0, Math.floor((rect.maxY() + r1) / pixelGroup)));
+    var startX = potentialArea.bound(Math.floor((rect.minX() - r1 - activeRegion.minX()) / pixelGroup), true);
+    var startY = potentialArea.bound(Math.floor((rect.minY() - r1 - activeRegion.minY()) / pixelGroup), false);
+    var endX = potentialArea.bound(Math.ceil((rect.maxX() + r1 - activeRegion.minX()) / pixelGroup), true);
+    var endY = potentialArea.bound(Math.ceil((rect.maxY() + r1 - activeRegion.minY()) / pixelGroup), false);
     // for every point in active subregion of potentialArea, calculate
     // distance to nearest point on rectangle and add influence
-    for(var x = startX;x < endX;x += 1) {
-      for(var y = startY;y < endY;y += 1) {
-        // if we are adding negative energy, skip if not already
-        // positive; positives have already been added first, and adding
-        // negative to <= 0 will have no affect on surface
-        if(influenceFactor < 0 && potentialArea.get(x, y) <= 0) {
-          continue;
-        }
+    for(var y = startY;y < endY;y += 1) {
+      for(var x = startX;x < endX;x += 1) {
         // convert back to screen coordinates
-        var tempX = x * pixelGroup;
-        var tempY = y * pixelGroup;
-        var distanceSq;
-        // test current point to see if it is inside rectangle
-        if(rect.containsPt(tempX, tempY)) {
-          distanceSq = 0;
-        } else {
-          // which edge of rectangle is closest
-          var outcode = rect.outcode(tempX, tempY);
-          // top
-          if((outcode & Rectangle.OUT_TOP) === Rectangle.OUT_TOP) {
-            // and left
-            if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
-              // linear distance from upper left corner
-              distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.minY());
-            } else {
-              // and right
-              if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
-                // linear distance from upper right corner
-                distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.minY());
-              } else {
-                // distance from top line segment
-                distanceSq = Line.ptSegDistSq(rect.minX(), rect.minY(), rect.maxX(), rect.minY(), tempX, tempY);
-              }
-            }
-          } else {
-            // bottom
-            if((outcode & Rectangle.OUT_BOTTOM) === Rectangle.OUT_BOTTOM) {
-              // and left
-              if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
-                // linear distance from lower left corner
-                distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.minX(), rect.maxY());
-              } else {
-                // and right
-                if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
-                  // linear distance from lower right corner
-                  distanceSq = Point.ptsDistanceSq(tempX, tempY, rect.maxX(), rect.maxY());
-                } else {
-                  // distance from bottom line segment
-                  distanceSq = Line.ptSegDistSq(rect.minX(), rect.maxY(), rect.maxX(), rect.maxY(), tempX, tempY);
-                }
-              }
-            } else {
-              // left only
-              if((outcode & Rectangle.OUT_LEFT) === Rectangle.OUT_LEFT) {
-                // linear distance from left edge
-                distanceSq = Line.ptSegDistSq(rect.minX(), rect.minY(), rect.minX(), rect.maxY(), tempX, tempY);
-              } else {
-                // right only
-                if((outcode & Rectangle.OUT_RIGHT) === Rectangle.OUT_RIGHT) {
-                  // linear distance from right edge
-                  distanceSq = Line.ptSegDistSq(rect.maxX(), rect.minY(), rect.maxX(), rect.maxY(), tempX, tempY);
-                }
-              }
-            }
-          }
-        }
+        var tempX = x * pixelGroup + activeRegion.minX();
+        var tempY = y * pixelGroup + activeRegion.minY();
+        var distanceSq = getRectDistSq(rect, tempX, tempY);
         // only influence if less than r1
         if(distanceSq < r1 * r1) {
           var dr = Math.sqrt(distanceSq) - r1;
@@ -1242,8 +1228,38 @@ function BubbleSet() {
         }
       }
     }
-  };
-  this.rerouteLine = function(rectangle, rerouteBuffer, intersections, wrapNormal) {
+  }
+
+  function calculateRectangleNegativeInfluence(potentialArea, influenceFactor, r1, rect) {
+    influenceFactor > 0 && console.warn("expected negative influence", influenceFactor);
+    // find the affected subregion of potentialArea
+    var startX = potentialArea.bound(Math.floor((rect.minX() - r1 - activeRegion.minX()) / pixelGroup), true);
+    var startY = potentialArea.bound(Math.floor((rect.minY() - r1 - activeRegion.minY()) / pixelGroup), false);
+    var endX = potentialArea.bound(Math.ceil((rect.maxX() + r1 - activeRegion.minX()) / pixelGroup), true);
+    var endY = potentialArea.bound(Math.ceil((rect.maxY() + r1 - activeRegion.minY()) / pixelGroup), false);
+    // for every point in active subregion of potentialArea, calculate
+    // distance to nearest point on rectangle and add influence
+    for(var y = startY;y < endY;y += 1) {
+      for(var x = startX;x < endX;x += 1) {
+        // skip if not already positive; positives have already been added first, and adding
+        // negative to <= 0 will have no affect on surface
+        if(potentialArea.get(x, y) <= 0) {
+          continue;
+        }
+        // convert back to screen coordinates
+        var tempX = x * pixelGroup + activeRegion.minX();
+        var tempY = y * pixelGroup + activeRegion.minY();
+        var distanceSq = getRectDistSq(rect, tempX, tempY);
+        // only influence if less than r1
+        if(distanceSq < r1 * r1) {
+          var dr = Math.sqrt(distanceSq) - r1;
+          potentialArea.set(x, y, potentialArea.get(x, y) + influenceFactor * dr * dr);
+        }
+      }
+    }
+  }
+
+  function rerouteLine(rectangle, rerouteBuffer, intersections, wrapNormal) {
     var topIntersect = intersections[0];
     var leftIntersect = intersections[1];
     var bottomIntersect = intersections[2];
@@ -1341,7 +1357,7 @@ function BubbleSet() {
       return new Point(rectangle.minX() - rerouteBuffer, rectangle.maxY() + rerouteBuffer);
     // top left
     return new Point(rectangle.minX() - rerouteBuffer, rectangle.minY() - rerouteBuffer);
-  };
+  }
 } // BubbleSet
 BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS = 100;
 BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS = 20;
