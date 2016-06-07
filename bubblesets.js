@@ -21,10 +21,10 @@ function BubbleSet() {
         width: width,
         height: height
       };
-      x = r.x;
-      y = r.y;
-      width = r.width;
-      height = r.height;
+      x = +r.x;
+      y = +r.y;
+      width = +r.width;
+      height = +r.height;
     };
     this.minX = function() {
       return x;
@@ -151,8 +151,8 @@ function BubbleSet() {
   Rectangle.OUT_BOTTOM = 8;
 
   function Point(ax, ay) {
-    var x = ax;
-    var y = ay;
+    var x = +ax;
+    var y = +ay;
     this.x = function(_) {
       if(!arguments.length) return x;
       x = _;
@@ -224,10 +224,10 @@ function BubbleSet() {
 
   function Line(_x1, _y1, _x2, _y2) {
     var that = this;
-    var x1 = _x1;
-    var y1 = _y1;
-    var x2 = _x2;
-    var y2 = _y2;
+    var x1 = +_x1;
+    var y1 = +_y1;
+    var x2 = +_x2;
+    var y2 = +_y2;
 
     this.rect = function() {
       var minX = Math.min(x1, x2);
@@ -297,11 +297,17 @@ function BubbleSet() {
       return Math.min(pos, (isX ? width : height) - 1);
     };
     this.get = function(x, y) {
-      if(x < 0 || x >= width || y < 0 || y >= height) return Number.NaN;
+      if(x < 0 || x >= width || y < 0 || y >= height) {
+        console.warn("Area.get out of bounds", x, y, width, height);
+        return Number.NaN;
+      }
       return buff[x + y * width];
     };
     this.set = function(x, y, v) {
-      if(x < 0 || x >= width || y < 0 || y >= height) return;
+      if(x < 0 || x >= width || y < 0 || y >= height) {
+        console.warn("Area.set out of bounds", x, y, width, height);
+        return;
+      }
       buff[x + y * width] = v;
     };
     this.width = function() {
