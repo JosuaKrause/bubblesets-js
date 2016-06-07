@@ -1111,15 +1111,14 @@ function BubbleSet() {
   }
 
   function countInterferenceItems(interferenceItems, testLine) {
-    var count = 0;
-    interferenceItems.forEach(function(interferenceItem) {
+    return interferenceItems.reduce(function(count, interferenceItem) {
       if(interferenceItem.intersectsLine(testLine)) {
         if(Intersection.fractionToLineCenter(interferenceItem, testLine) >= 0) {
-          count += 1;
+          return count + 1;
         }
       }
-    });
-    return count;
+      return count;
+    }, 0);
   }
 
   function calculateLinesInfluence(potentialArea, influenceFactor, r1, lines, activeRegion) {
