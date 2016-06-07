@@ -1,6 +1,7 @@
 /**
  * Created by krause on 2014-10-25.
  */
+"use strict";
 
 function BubbleSet() {
   var thatBS = this;
@@ -278,10 +279,21 @@ function BubbleSet() {
       return BubbleSet.linePtSegDistSq(that.x1(), that.y1(), that.x2(), that.y2(), x, y);
     };
     this.ptClose = function(x, y, r) {
-      if(x < Math.min(that.x1(), that.x2()) - r) return false;
-      if(y < Math.min(that.y1(), that.y2()) - r) return false;
-      if(x > Math.max(that.x1(), that.x2()) + r) return false;
-      if(y > Math.max(that.y1(), that.y2()) + r) return false;
+      // check whether the point is outside the bounding rectangle with padding r
+      var x1 = that.x1();
+      var x2 = that.x2();
+      if(x1 < x2) {
+        if(x < x1 - r || x > x2 + r) return false;
+      } else {
+        if(x < x2 - r || x > x1 + r) return false;
+      }
+      var y1 = that.y1();
+      var y2 = that.y2();
+      if(y1 < y2) {
+        if(y < y1 - r || y > y2 + r) return false;
+      } else {
+        if(y < y2 - r || y > y1 + r) return false;
+      }
       return true;
     };
   }; // Line
@@ -1151,7 +1163,7 @@ function BubbleSet() {
         var tempY = y * pixelGroup + activeRegion.minY();
         var minDistanceSq = Number.POSITIVE_INFINITY;
         lines.forEach(function(line) {
-          // ignore lines where the point is further than a radius from the boudning rectangle
+          // ignore lines where the point is further than a radius from the bounding rectangle
           if(!line.ptClose(tempX, tempY, r1)) return;
           // use squared distance for comparison
           var distanceSq = line.ptSegDistSq(tempX, tempY);
