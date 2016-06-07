@@ -1147,37 +1147,35 @@ function BubbleSet() {
     // find the affected subregion of potentialArea
     var startX = Math.min(Math.max(0, Math.floor((r.minX() - r1) / pixelGroup)), potentialArea.width() - 1);
     var startY = Math.min(Math.max(0, Math.floor((r.minY() - r1) / pixelGroup)), potentialArea.height() - 1);
-    var endX = Math.min(potentialArea.width() - 1, Math.max(0, Math.floor((r.minX() + r.width() + r1) / pixelGroup)));
-    var endY = Math.min(potentialArea.height(), Math.max(0, Math.floor((r.minY() + r.height() + r1) / pixelGroup)));
-    // for every point in active part of potentialArea, calculate distance to nearest point on line and add influence
-    for(var x = startX;x < endX;x += 1) {
-      for(var y = startY;y < endY;y += 1) {
-        // if we are adding negative energy, skip if not already
-        // positive; positives have already been added first, and adding
-        // negative to <=0 will have no affect on surface
-        if(influenceFactor < 0 && potentialArea.get(x, y) <= 0) {
-          continue;
-        }
-        // convert back to screen coordinates
-        var tempX = x * pixelGroup + activeRegion.minX();
-        var tempY = y * pixelGroup + activeRegion.minY();
-        var minDistanceSq = Number.POSITIVE_INFINITY;
-        lines.forEach(function(line) {
-          // ignore lines where the point is further than a radius from the bounding rectangle
-          if(!line.ptClose(tempX, tempY, r1)) return;
-          // use squared distance for comparison
-          var distanceSq = line.ptSegDistSq(tempX, tempY);
-          if(distanceSq < minDistanceSq) {
-            minDistanceSq = distanceSq;
+    var endX = Math.min(potentialArea.width() - 1, Math.max(0, Math.ceil((r.maxX() + r1) / pixelGroup)));
+    var endY = Math.min(potentialArea.height(), Math.max(0, Math.ceil((r.maxY() + r1) / pixelGroup)));
+    lines.forEach(function(line) {
+      var lr = line.rect();
+      var beginX = Math.max(startX, Math.floor((lr.minX() - r1 - activeRegion.minX()) / pixelGroup));
+      var stopX = Math.min(endX, Math.ceil((lr.maxX() + r1 - activeRegion.minX()) / pixelGroup));
+      var beginY = Math.max(startY, Math.floor((lr.minY() - r1 - activeRegion.minY()) / pixelGroup));
+      var stopY = Math.min(endY, Math.ceil((lr.maxY() + r1 - activeRegion.minY()) / pixelGroup));
+      // for every point in active part of potentialArea, calculate distance to nearest point on line and add influence
+      for(var x = beginX;x < stopX;x += 1) {
+        for(var y = beginY;y < stopY;y += 1) {
+          // if we are adding negative energy, skip if not already
+          // positive; positives have already been added first, and adding
+          // negative to <=0 will have no affect on surface
+          if(influenceFactor < 0 && potentialArea.get(x, y) <= 0) {
+            continue;
           }
-        });
-        // only influence if less than r1
-        if(minDistanceSq < r1 * r1) {
-          var mdr = Math.sqrt(minDistanceSq) - r1;
-          potentialArea.set(x, y, potentialArea.get(x, y) + influenceFactor * mdr * mdr);
+          // convert back to screen coordinates
+          var tempX = x * pixelGroup + activeRegion.minX();
+          var tempY = y * pixelGroup + activeRegion.minY();
+          var minDistanceSq = line.ptSegDistSq(tempX, tempY);
+          // only influence if less than r1
+          if(minDistanceSq < r1 * r1) {
+            var mdr = Math.sqrt(minDistanceSq) - r1;
+            potentialArea.set(x, y, potentialArea.get(x, y) + influenceFactor * mdr * mdr);
+          }
         }
       }
-    }
+    });
   };
   this.calculateRectangleInfluence = function(potentialArea, influenceFactor, r1, rect) {
     // find the affected subregion of potentialArea
