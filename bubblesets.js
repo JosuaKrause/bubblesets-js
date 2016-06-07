@@ -1127,34 +1127,13 @@ function BubbleSet() {
     return count;
   };
   this.calculateLinesInfluence = function(potentialArea, influenceFactor, r1, lines, activeRegion) {
-    var r = null;
-    // calculate active region for the lines
-    lines.forEach(function(line) {
-      if(!r) {
-        r = line.rect();
-      } else {
-        r.add(line.rect());
-      }
-    });
-    if(!r) return;
-    // offset the rectangle by the bubble set bounds to put into 0, 0 space for potentialArea
-    r.rect({
-      x: r.minX() - activeRegion.minX(),
-      y: r.minY() - activeRegion.minY(),
-      width: r.width(),
-      height: r.height(),
-    });
-    // find the affected subregion of potentialArea
-    var startX = Math.min(Math.max(0, Math.floor((r.minX() - r1) / pixelGroup)), potentialArea.width() - 1);
-    var startY = Math.min(Math.max(0, Math.floor((r.minY() - r1) / pixelGroup)), potentialArea.height() - 1);
-    var endX = Math.min(potentialArea.width() - 1, Math.max(0, Math.ceil((r.maxX() + r1) / pixelGroup)));
-    var endY = Math.min(potentialArea.height(), Math.max(0, Math.ceil((r.maxY() + r1) / pixelGroup)));
     lines.forEach(function(line) {
       var lr = line.rect();
-      var beginX = Math.max(startX, Math.floor((lr.minX() - r1 - activeRegion.minX()) / pixelGroup));
-      var stopX = Math.min(endX, Math.ceil((lr.maxX() + r1 - activeRegion.minX()) / pixelGroup));
-      var beginY = Math.max(startY, Math.floor((lr.minY() - r1 - activeRegion.minY()) / pixelGroup));
-      var stopY = Math.min(endY, Math.ceil((lr.maxY() + r1 - activeRegion.minY()) / pixelGroup));
+      // only traverse the plausible area
+      var beginX = Math.floor((lr.minX() - r1 - activeRegion.minX()) / pixelGroup);
+      var stopX = Math.ceil((lr.maxX() + r1 - activeRegion.minX()) / pixelGroup);
+      var beginY = Math.floor((lr.minY() - r1 - activeRegion.minY()) / pixelGroup);
+      var stopY = Math.ceil((lr.maxY() + r1 - activeRegion.minY()) / pixelGroup);
       // for every point in active part of potentialArea, calculate distance to nearest point on line and add influence
       for(var x = beginX;x < stopX;x += 1) {
         for(var y = beginY;y < stopY;y += 1) {
