@@ -371,12 +371,20 @@ function BubbleSet() {
     }
     return Number.POSITIVE_INFINITY;
   };
+  // we can move them out here since there can't be any concurrency
+  var intersectionPa = new Point(0, 0);
+  var intersectionPb = new Point(0, 0);
+  var intersectionPline = new Line(intersectionPa, intersectionPb);
   Intersection.fractionToLineCenter = function(bounds, line) {
     var minDistance = Number.POSITIVE_INFINITY;
     var countIntersections = 0;
 
     function testLine(xa, ya, xb, yb) {
-      var testDistance = Intersection.fractionAlongLineA(line, new Line(new Point(xa, ya), new Point(xb, yb)));
+      intersectionPa.x(xa);
+      intersectionPa.y(ya);
+      intersectionPb.x(xb);
+      intersectionPb.y(yb);
+      var testDistance = Intersection.fractionAlongLineA(line, intersectionPline);
       testDistance = Math.abs(testDistance - 0.5);
       if((testDistance >= 0) && (testDistance <= 1)) {
         countIntersections += 1;
