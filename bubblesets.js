@@ -171,8 +171,8 @@ function BubbleSet() {
   Point.ptsDistanceSq = function(x1, y1, x2, y2) {
     return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
   };
-  Point.doublePointsEqual = function(p1, p2, delta) {
-    return p1.distanceSq(p2) < delta * delta;
+  Point.doublePointsEqual = function(x1, y1, x2, y2, delta) {
+    return Point.ptsDistanceSq(x1, y1, x2, y2) < delta * delta;
   };
 
   function PointList(size) {
@@ -222,16 +222,18 @@ function BubbleSet() {
     };
   }; // PointList
 
-  function Line(_p1, _p2) {
+  function Line(_x1, _y1, _x2, _y2) {
     var that = this;
-    var p1 = _p1;
-    var p2 = _p2;
+    var x1 = _x1;
+    var y1 = _y1;
+    var x2 = _x2;
+    var y2 = _y2;
 
     this.rect = function() {
-      var minX = Math.min(that.x1(), that.x2());
-      var minY = Math.min(that.y1(), that.y2());
-      var maxX = Math.max(that.x1(), that.x2());
-      var maxY = Math.max(that.y1(), that.y2());
+      var minX = Math.min(x1, x2);
+      var minY = Math.min(y1, y2);
+      var maxX = Math.max(x1, x2);
+      var maxY = Math.max(y1, y2);
       var res = new Rectangle({
         x: minX,
         y: minY,
@@ -240,55 +242,43 @@ function BubbleSet() {
       });
       return res;
     }
-    this.x1 = function() {
-      return p1.x();
+    this.x1 = function(_) {
+      if(!arguments.length) return x1;
+      x1 = _;
     };
-    this.x2 = function() {
-      return p2.x();
+    this.x2 = function(_) {
+      if(!arguments.length) return x2;
+      x2 = _;
     };
-    this.y1 = function() {
-      return p1.y();
+    this.y1 = function(_) {
+      if(!arguments.length) return y1;
+      y1 = _;
     };
-    this.y2 = function() {
-      return p2.y();
-    };
-    this.p1 = function(_p1) {
-      if(!arguments.length) return p1;
-      p1 = _p1;
-    };
-    this.p2 = function(_p2) {
-      if(!arguments.length) return p2;
-      p2 = _p2;
+    this.y2 = function(_) {
+      if(!arguments.length) return y2;
+      y2 = _;
     };
     // whether an infinite line to positive x from the point p will cut through the line
     this.cuts = function(p) {
-      var y1 = that.y1();
-      var y2 = that.y2();
-      if(y1 == y2) return false;
+      if(y1 === y2) return false;
       var y = p.y();
       if((y < y1 && y <= y2) || (y > y1 && y >= y2)) return false;
       var x = p.x();
-      var x1 = that.x1();
-      var x2 = that.x2();
       if(x > x1 && x >= x2) return false;
       if(x < x1 && x <= x2) return true;
       var cross = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
       return x <= cross;
     };
     this.ptSegDistSq = function(x, y) {
-      return BubbleSet.linePtSegDistSq(that.x1(), that.y1(), that.x2(), that.y2(), x, y);
+      return BubbleSet.linePtSegDistSq(x1, y1, x2, y2, x, y);
     };
     this.ptClose = function(x, y, r) {
       // check whether the point is outside the bounding rectangle with padding r
-      var x1 = that.x1();
-      var x2 = that.x2();
       if(x1 < x2) {
         if(x < x1 - r || x > x2 + r) return false;
       } else {
         if(x < x2 - r || x > x1 + r) return false;
       }
-      var y1 = that.y1();
-      var y2 = that.y2();
       if(y1 < y2) {
         if(y < y1 - r || y > y2 + r) return false;
       } else {
@@ -372,18 +362,16 @@ function BubbleSet() {
     return Number.POSITIVE_INFINITY;
   };
   // we can move them out here since there can't be any concurrency
-  var intersectionPa = new Point(0, 0);
-  var intersectionPb = new Point(0, 0);
-  var intersectionPline = new Line(intersectionPa, intersectionPb);
+  var intersectionPline = new Line(0.0, 0.0, 0.0, 0.0);
   Intersection.fractionToLineCenter = function(bounds, line) {
     var minDistance = Number.POSITIVE_INFINITY;
     var countIntersections = 0;
 
     function testLine(xa, ya, xb, yb) {
-      intersectionPa.x(xa);
-      intersectionPa.y(ya);
-      intersectionPb.x(xb);
-      intersectionPb.y(yb);
+      intersectionPline.x1(xa);
+      intersectionPline.y1(ya);
+      intersectionPline.x2(xb);
+      intersectionPline.y2(yb);
       var testDistance = Intersection.fractionAlongLineA(line, intersectionPline);
       testDistance = Math.abs(testDistance - 0.5);
       if((testDistance >= 0) && (testDistance <= 1)) {
@@ -413,7 +401,7 @@ function BubbleSet() {
     var countIntersections = 0;
 
     function testLine(xa, ya, xb, yb) {
-      var testDistance = Intersection.fractionAlongLineA(line, new Line(new Point(xa, ya), new Point(xb, yb)));
+      var testDistance = Intersection.fractionAlongLineA(line, new Line(xa, ya, xb, yb));
       if((testDistance >= 0) && (testDistance <= 1)) {
         countIntersections += 1;
         if(testDistance < minDistance) {
@@ -440,7 +428,7 @@ function BubbleSet() {
     var countIntersections = 0;
 
     function fillIntersection(ix, xa, ya, xb, yb) {
-      intersections[ix] = Intersection.intersectLineLine(line, new Line(new Point(xa, ya), new Point(xb, yb)));
+      intersections[ix] = Intersection.intersectLineLine(line, new Line(xa, ya, xb, yb));
       if(intersections[ix].getState == Intersection.POINT) {
         countIntersections += 1;
       }
@@ -644,7 +632,7 @@ function BubbleSet() {
     calculateVirtualEdges(memberItems, nonMembers);
 
     edges && edges.forEach(function(e) {
-      virtualEdges.push(new Line(new Point(e.x1, e.y1), new Point(e.x2, e.y2)));
+      virtualEdges.push(new Line(e.x1, e.y1, e.x2, e.y2));
     });
 
     activeRegion = null;
@@ -786,19 +774,23 @@ function BubbleSet() {
       var crossings = 0;
       g.forEach(function(cur) {
         if(!line) {
-          line = new Line(cur, cur);
+          line = new Line(cur.x(), cur.y(), cur.x(), cur.y());
           first = cur;
           return;
         }
-        line.p1(line.p2());
-        line.p2(cur);
+        line.x1(line.x2());
+        line.y1(line.y2());
+        line.x2(cur.x());
+        line.y2(cur.y());
         if(line.cuts(p)) {
           crossings += 1;
         }
       });
       if(first) {
-        line.p1(line.p2());
-        line.p2(first);
+        line.x1(line.x2());
+        line.y1(line.y2());
+        line.x2(first.x());
+        line.y2(first.y());
         if(line.cuts(p)) {
           crossings += 1;
         }
@@ -953,7 +945,7 @@ function BubbleSet() {
       var nCenter = new Point(neighbourItem.centerX(), neighbourItem.centerY());
       var distanceSq = itemCenter.distanceSq(nCenter);
 
-      var completeLine = new Line(itemCenter, nCenter);
+      var completeLine = new Line(itemCenter.x(), itemCenter.y(), nCenter.x(), nCenter.y());
       // augment distance by number of interfering items
       var numberInterferenceItems = countInterferenceItems(nonMembers, completeLine);
 
@@ -967,7 +959,7 @@ function BubbleSet() {
     // if there is a visited closest neighbour, add straight line between
     // them to the positive energy to ensure connected clusters
     if(closestNeighbour) {
-      var completeLine = new Line(itemCenter, new Point(closestNeighbour.centerX(), closestNeighbour.centerY()));
+      var completeLine = new Line(itemCenter.x(), itemCenter.y(), closestNeighbour.centerX(), closestNeighbour.centerY());
       // route the edge around intersecting nodes not in set
       linesToCheck.push(completeLine);
 
@@ -1002,8 +994,8 @@ function BubbleSet() {
 
               if(movePoint && (!foundFirst) && (!pointInside)) {
                 // add 2 rerouted lines to check
-                linesToCheck.push(new Line(line.p1(), movePoint));
-                linesToCheck.push(new Line(movePoint, line.p2()));
+                linesToCheck.push(new Line(line.x1(), line.y1(), movePoint.x(), movePoint.y()));
+                linesToCheck.push(new Line(movePoint.x(), movePoint.y(), line.x2(), line.y2()));
                 // indicate intersection found
                 hasIntersection = true;
               }
@@ -1026,8 +1018,8 @@ function BubbleSet() {
 
                 if(movePoint && (!foundSecond)) {
                   // add 2 rerouted lines to check
-                  linesToCheck.push(new Line(line.p1(), movePoint));
-                  linesToCheck.push(new Line(movePoint, line.p2()));
+                  linesToCheck.push(new Line(line.x1(), line.y1(), movePoint.x(), movePoint.y()));
+                  linesToCheck.push(new Line(movePoint.x(), movePoint.y(), line.x2(), line.y2()));
                   // indicate intersection found
                   hasIntersection = true;
                 }
@@ -1054,7 +1046,7 @@ function BubbleSet() {
         var line1 = scannedLines.pop();
         if(scannedLines.length) {
           var line2 = scannedLines.pop();
-          var mergeLine = new Line(line1.p1(), line2.p2());
+          var mergeLine = new Line(line1.x1(), line1.y1(), line2.x2(), line2.y2());
           // resolve intersections in order along edge
           var closestItem = getCenterItem(nonMembers, mergeLine);
           // merge most recent line and previous line
@@ -1083,10 +1075,10 @@ function BubbleSet() {
     var found = false;
     lines.forEach(function(checkEndPointsLine) {
       if(found) return;
-      if(Point.doublePointsEqual(checkEndPointsLine.p1(), pointToCheck, 1e-3)) {
+      if(Point.doublePointsEqual(checkEndPointsLine.x1(), checkEndPointsLine.y1(), pointToCheck.x(), pointToCheck.y(), 1e-3)) {
         found = true;
       }
-      if(Point.doublePointsEqual(checkEndPointsLine.p2(), pointToCheck, 1e-3)) {
+      if(Point.doublePointsEqual(checkEndPointsLine.x2(), checkEndPointsLine.y2(), pointToCheck.x(), pointToCheck.y(), 1e-3)) {
         found = true;
       }
     });
