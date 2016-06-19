@@ -34,5 +34,5 @@ var outline = new PointPath(list).transform([
 
 See also the [example](http://josuakrause.github.io/bubblesets-js/) (add rectangles by clicking with the left or right mouse button).
 
-This implementation is mostly a translation of the Java code originally written by Christopher Collins.
+This implementation is based on the Java code originally written by Christopher Collins.
 If you're missing a feature from the Java version or find a bug please open an [issue](https://github.com/JosuaKrause/bubblesets-js/issues/new). [Pull requests](https://github.com/JosuaKrause/bubblesets-js/compare) are also welcome.
