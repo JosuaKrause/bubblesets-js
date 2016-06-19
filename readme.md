@@ -1,7 +1,7 @@
 BubbleSets for JavaScript
 =========================
 
-A JavaScript implementation of [bubble sets](http://vialab.science.uoit.ca/portfolio/bubblesets)
+A JavaScript implementation of Christopher Collins [bubble sets](http://vialab.science.uoit.ca/portfolio/bubblesets)
 without the use of external libraries. A Java implementation can be found [here](https://github.com/JosuaKrause/Bubble-Sets).
 
 Usage:
@@ -34,4 +34,5 @@ var outline = new PointPath(list).transform([
 
 See also the [example](http://josuakrause.github.io/bubblesets-js/) (add rectangles by clicking with the left or right mouse button).
 
-This is a one-to-one translation of the Java code. If you're missing a feature from the Java version or find a bug please open an [issue](https://github.com/JosuaKrause/bubblesets-js/issues/new). [Pull requests](https://github.com/JosuaKrause/bubblesets-js/compare) are also welcome.
+This implementation is mostly a translation of the Java code originally written by Christopher Collins.
+If you're missing a feature from the Java version or find a bug please open an [issue](https://github.com/JosuaKrause/bubblesets-js/issues/new). [Pull requests](https://github.com/JosuaKrause/bubblesets-js/compare) are also welcome.
