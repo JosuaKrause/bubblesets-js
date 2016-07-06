@@ -34,7 +34,7 @@ var outline = new PointPath(list).transform([
 // outline is a path that can be used for the attribute d of a SVG path element
 ```
 
-See also the [example](http://josuakrause.github.io/bubblesets-js/) (add rectangles by clicking with the left or right mouse button).
+See also the [demo](http://josuakrause.github.io/bubblesets-js/) (add rectangles by clicking with the left or right mouse button), a more advanced [example](http://josuakrause.github.io/bubblesets-js/cliques.html), and the [benchmark](http://josuakrause.github.io/bubblesets-js/bench.html).
 
 This implementation is based on the Java code originally written by Christopher Collins.
 If you're missing a feature from the Java version or find a bug please open an [issue](https://github.com/JosuaKrause/bubblesets-js/issues/new). [Pull requests](https://github.com/JosuaKrause/bubblesets-js/compare) are also welcome.
