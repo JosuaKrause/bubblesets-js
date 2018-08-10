@@ -684,19 +684,19 @@ function BubbleSet() {
       // reduce negative influences first; this will allow the surface to
       // pass without making it fatter all around (which raising the threshold does)
       if(iterations <= maxMarchingIterations * 0.5) {
-        threshold *= 0.95;
-        nodeInfluenceFactor *= 1.2;
-        edgeInfluenceFactor *= 1.2;
-        fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
-      }
-
-      // after half the iterations, start increasing positive energy and lowering the threshold
-      if(iterations > maxMarchingIterations * 0.5) {
         if(negativeNodeInfluenceFactor != 0) {
           threshold *= 0.95;
           negativeNodeInfluenceFactor *= 0.8;
           fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
-        }
+        }        
+      }
+
+      // after half the iterations, start increasing positive energy and lowering the threshold
+      if(iterations > maxMarchingIterations * 0.5) {
+        threshold *= 0.95;
+        nodeInfluenceFactor *= 1.2;
+        edgeInfluenceFactor *= 1.2;
+        fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
       }
     }
 
@@ -1359,15 +1359,17 @@ function BubbleSet() {
     return new Point(rectangle.minX() - rerouteBuffer, rectangle.minY() - rerouteBuffer);
   }
 } // BubbleSet
-BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS = 100;
-BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS = 20;
-BubbleSet.DEFAULT_PIXEL_GROUP = 4;
-BubbleSet.DEFAULT_EDGE_R0 = 10;
-BubbleSet.DEFAULT_EDGE_R1 = 20;
-BubbleSet.DEFAULT_NODE_R0 = 15;
-BubbleSet.DEFAULT_NODE_R1 = 50;
-BubbleSet.DEFAULT_MORPH_BUFFER = BubbleSet.DEFAULT_NODE_R0;
-BubbleSet.DEFAULT_SKIP = 8;
+
+// override these defaults to change the spacing and bubble precision; affects performance and appearance
+BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS = 100;  // number of times to run the algorithm to refine the path finding in difficult areas
+BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS = 20; // number of times to refine the boundary
+BubbleSet.DEFAULT_PIXEL_GROUP = 4; // the resolution of the algorithm in square pixels
+BubbleSet.DEFAULT_EDGE_R0 = 10; // the distance from edges at which energy is 1 (full influence)
+BubbleSet.DEFAULT_EDGE_R1 = 20; // the distance from edges at which energy is 0 (no influence)
+BubbleSet.DEFAULT_NODE_R0 = 15; // the distance from nodes which energy is 1 (full influence)
+BubbleSet.DEFAULT_NODE_R1 = 50; // the distance from nodes at which energy is 0 (no influence)
+BubbleSet.DEFAULT_MORPH_BUFFER = BubbleSet.DEFAULT_NODE_R0; // the amount of space to move the virtual edge when wrapping around obstacles
+BubbleSet.DEFAULT_SKIP = 8; // the default number of contour steps to skip when building the contour (higher is less precise but faster)
 
 BubbleSet.linePtSegDistSq = function(lx1, ly1, lx2, ly2, x, y) {
   // taken from JDK 8 java.awt.geom.Line2D#ptSegDistSq(double, double, double, double, double, double)
