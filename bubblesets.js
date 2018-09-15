@@ -1345,7 +1345,7 @@ function BubbleSet() {
     }
     // else through top to bottom, calculate areas
     var totalArea = rectangle.height() * rectangle.width();
-    var leftArea = rectangle.height() * (((topIntersect.getPoint().x() - rectangle.minX()) + (rightIntersect.getPoint().x() - rectangle.minX())) * 0.5);
+    var leftArea = rectangle.height() * (((topIntersect.getPoint().x() - rectangle.minX()) + (bottomIntersect.getPoint().x() - rectangle.minX())) * 0.5);
     if(leftArea < totalArea * 0.5) {
       // go around right
       if(topIntersect.getPoint().x() > bottomIntersect.getPoint().x()) // bottom right
