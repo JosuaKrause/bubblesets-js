@@ -193,12 +193,12 @@ function BubbleSet() {
     this.contains = function(p) {
       var test = set[hash(p)];
       if(!test) return false;
-      return test.x() == p.x() && test.y() == p.y();
+      return test.x() === p.x() && test.y() === p.y();
     };
     this.isFirst = function(p) {
       if(!els) return false;
       var test = arr[0];
-      return test.x() == p.x() && test.y() == p.y();
+      return test.x() === p.x() && test.y() === p.y();
     };
     this.list = function() {
       return arr.filter(function(p) {
@@ -349,7 +349,7 @@ function BubbleSet() {
       }
       return new Intersection(null, Intersection.NONE);
     }
-    return new Intersection(null, (uaT == 0 || ubT == 0) ? Intersection.COINCIDENT : Intersection.PARALLEL);
+    return new Intersection(null, (uaT === 0 || ubT === 0) ? Intersection.COINCIDENT : Intersection.PARALLEL);
   };
   Intersection.fractionAlongLineA = function(la, lb) {
     var uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
@@ -399,7 +399,7 @@ function BubbleSet() {
     // right
     testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
     // if no intersection, return -1
-    if(countIntersections == 0) return -1;
+    if(countIntersections === 0) return -1;
     return minDistance;
   };
   Intersection.fractionToLineEnd = function(bounds, line) {
@@ -427,7 +427,7 @@ function BubbleSet() {
     // right
     testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
     // if no intersection, return -1
-    if(countIntersections == 0) return -1;
+    if(countIntersections === 0) return -1;
     return minDistance;
   };
   Intersection.testIntersection = function(line, bounds, intersections) {
@@ -435,7 +435,7 @@ function BubbleSet() {
 
     function fillIntersection(ix, xa, ya, xb, yb) {
       intersections[ix] = Intersection.intersectLineLine(line, new Line(xa, ya, xb, yb));
-      if(intersections[ix].getState() == Intersection.POINT) {
+      if(intersections[ix].getState() === Intersection.POINT) {
         countIntersections += 1;
       }
     }
@@ -509,7 +509,7 @@ function BubbleSet() {
             direction = MarchingSquares.W;
             break;
           case 6:
-            direction = (direction == MarchingSquares.N) ? MarchingSquares.W : MarchingSquares.E;
+            direction = (direction === MarchingSquares.N) ? MarchingSquares.W : MarchingSquares.E;
             break;
           case 1:
           case 13:
@@ -517,7 +517,7 @@ function BubbleSet() {
             direction = MarchingSquares.N;
             break;
           case 9:
-            direction = (direction == MarchingSquares.E) ? MarchingSquares.N : MarchingSquares.S;
+            direction = (direction === MarchingSquares.E) ? MarchingSquares.N : MarchingSquares.S;
             break;
           case 10:
           case 8:
@@ -801,7 +801,7 @@ function BubbleSet() {
           crossings += 1;
         }
       }
-      return crossings % 2 == 1;
+      return crossings % 2 === 1;
     }
 
     // start with global SKIP value, but decrease skip amount if there
@@ -984,7 +984,7 @@ function BubbleSet() {
           if(closestItem) {
             numIntersections = Intersection.testIntersection(line, closestItem, intersections);
             // 2 intersections = line passes through item
-            if(numIntersections == 2) {
+            if(numIntersections === 2) {
               var tempMorphBuffer = morphBuffer;
               var movePoint = rerouteLine(closestItem, tempMorphBuffer, intersections, true);
               // test the movePoint already exists
