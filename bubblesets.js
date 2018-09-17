@@ -193,12 +193,12 @@ function BubbleSet() {
     this.contains = function(p) {
       var test = set[hash(p)];
       if(!test) return false;
-      return +test.x() == +p.x() && +test.y() == +p.y();
+      return +test.x() === +p.x() && +test.y() === +p.y();
     };
     this.isFirst = function(p) {
       if(!els) return false;
       var test = arr[0];
-      return +test.x() == +p.x() && +test.y() == +p.y();
+      return +test.x() === +p.x() && +test.y() === +p.y();
     };
     this.list = function() {
       return arr.filter(function(p) {
@@ -349,7 +349,7 @@ function BubbleSet() {
       }
       return new Intersection(null, Intersection.NONE);
     }
-    return new Intersection(null, (uaT == 0 || ubT == 0) ? Intersection.COINCIDENT : Intersection.PARALLEL);
+    return new Intersection(null, (uaT === 0 || ubT === 0) ? Intersection.COINCIDENT : Intersection.PARALLEL);
   };
   Intersection.fractionAlongLineA = function(la, lb) {
     var uB  = (+lb.y2() - +lb.y1()) * (+la.x2() - +la.x1())
@@ -399,7 +399,7 @@ function BubbleSet() {
     // right
     testLine(+bounds.maxX(), +bounds.minY(), +bounds.maxX(), +bounds.maxY());
     // if no intersection, return -1
-    if(countIntersections == 0) return -1;
+    if(countIntersections === 0) return -1;
     return minDistance;
   };
   var intersectionPlineB = new Line(0.0, 0.0, 0.0, 0.0);
@@ -432,7 +432,7 @@ function BubbleSet() {
     // right
     testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
     // if no intersection, return -1
-    if(countIntersections == 0) return -1;
+    if(countIntersections === 0) return -1;
     return minDistance;
   };
   var intersectionPlineC = new Line(0.0, 0.0, 0.0, 0.0);
@@ -445,7 +445,7 @@ function BubbleSet() {
       intersectionPlineC.x2(+xb);
       intersectionPlineC.y2(+yb);
       intersections[+ix] = +Intersection.intersectLineLine(line, intersectionPlineC);
-      if(intersections[+ix].getState == Intersection.POINT) {
+      if(intersections[+ix].getState() === Intersection.POINT) {
         countIntersections += 1;
       }
     }
@@ -694,19 +694,19 @@ function BubbleSet() {
       // reduce negative influences first; this will allow the surface to
       // pass without making it fatter all around (which raising the threshold does)
       if(iterations <= maxMarchingIterations * 0.5) {
-        threshold *= 0.95;
-        nodeInfluenceFactor *= 1.2;
-        edgeInfluenceFactor *= 1.2;
-        fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
-      }
-
-      // after half the iterations, start increasing positive energy and lowering the threshold
-      if(iterations > maxMarchingIterations * 0.5) {
         if(negativeNodeInfluenceFactor != 0) {
           threshold *= 0.95;
           negativeNodeInfluenceFactor *= 0.8;
           fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
         }
+      }
+
+      // after half the iterations, start increasing positive energy and lowering the threshold
+      if(iterations > maxMarchingIterations * 0.5) {
+        threshold *= 0.95;
+        nodeInfluenceFactor *= 1.2;
+        edgeInfluenceFactor *= 1.2;
+        fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
       }
     }
 
@@ -990,6 +990,7 @@ function BubbleSet() {
           var line = linesToCheck.pop();
           // resolve intersections in order along edge
           var closestItem = getCenterItem(nonMembers, line);
+
           if(closestItem) {
             numIntersections = Intersection.testIntersection(line, closestItem, intersections);
             // 2 intersections = line passes through item
@@ -1310,7 +1311,7 @@ function BubbleSet() {
       }
       // else through top to bottom, calculate areas
       var totalArea = +rectangle.height() * +rectangle.width();
-      var leftArea = +rectangle.height() * (((+topIntersect.getPoint().x() - +rectangle.minX()) + (+rightIntersect.getPoint().x() - +rectangle.minX())) * 0.5);
+      var leftArea = +rectangle.height() * (((+topIntersect.getPoint().x() - +rectangle.minX()) + (+bottomIntersect.getPoint().x() - +rectangle.minX())) * 0.5);
       if(leftArea < totalArea * 0.5) {
         // go around left
         if(+topIntersect.getPoint().x() > +bottomIntersect.getPoint().x()) // top left
@@ -1354,7 +1355,7 @@ function BubbleSet() {
     }
     // else through top to bottom, calculate areas
     var totalArea = +rectangle.height() * +rectangle.width();
-    var leftArea = +rectangle.height() * (((+topIntersect.getPoint().x() - +rectangle.minX()) + (+rightIntersect.getPoint().x() - +rectangle.minX())) * 0.5);
+    var leftArea = +rectangle.height() * (((+topIntersect.getPoint().x() - +rectangle.minX()) + (+bottomIntersect.getPoint().x() - +rectangle.minX())) * 0.5);
     if(leftArea < totalArea * 0.5) {
       // go around right
       if(+topIntersect.getPoint().x() > +bottomIntersect.getPoint().x()) // bottom right
@@ -1369,15 +1370,17 @@ function BubbleSet() {
     return new Point(+rectangle.minX() - +rerouteBuffer, +rectangle.minY() - +rerouteBuffer);
   }
 } // BubbleSet
-BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS = 100;
-BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS = 20;
-BubbleSet.DEFAULT_PIXEL_GROUP = 4;
-BubbleSet.DEFAULT_EDGE_R0 = 10;
-BubbleSet.DEFAULT_EDGE_R1 = 20;
-BubbleSet.DEFAULT_NODE_R0 = 15;
-BubbleSet.DEFAULT_NODE_R1 = 50;
-BubbleSet.DEFAULT_MORPH_BUFFER = +BubbleSet.DEFAULT_NODE_R0;
-BubbleSet.DEFAULT_SKIP = 8;
+
+// override these defaults to change the spacing and bubble precision; affects performance and appearance
+BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS = 100;  // number of times to run the algorithm to refine the path finding in difficult areas
+BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS = 20; // number of times to refine the boundary
+BubbleSet.DEFAULT_PIXEL_GROUP = 4; // the resolution of the algorithm in square pixels
+BubbleSet.DEFAULT_EDGE_R0 = 10; // the distance from edges at which energy is 1 (full influence)
+BubbleSet.DEFAULT_EDGE_R1 = 20; // the distance from edges at which energy is 0 (no influence)
+BubbleSet.DEFAULT_NODE_R0 = 15; // the distance from nodes which energy is 1 (full influence)
+BubbleSet.DEFAULT_NODE_R1 = 50; // the distance from nodes at which energy is 0 (no influence)
+BubbleSet.DEFAULT_MORPH_BUFFER = +BubbleSet.DEFAULT_NODE_R0; // the amount of space to move the virtual edge when wrapping around obstacles
+BubbleSet.DEFAULT_SKIP = 8; // the default number of contour steps to skip when building the contour (higher is less precise but faster)
 
 BubbleSet.linePtSegDistSq = function(lx1, ly1, lx2, ly2, x, y) {
   // taken from JDK 8 java.awt.geom.Line2D#ptSegDistSq(double, double, double, double, double, double)

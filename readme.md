@@ -1,8 +1,10 @@
 BubbleSets for JavaScript
 =========================
 
-This is a JavaScript implementation of [bubble sets](http://vialab.science.uoit.ca/portfolio/bubblesets)
+A JavaScript implementation of Christopher Collins' [bubble sets](http://vialab.science.uoit.ca/portfolio/bubblesets)
 without the use of external libraries. A Java implementation can be found [here](https://github.com/JosuaKrause/Bubble-Sets).
+
+[![Bubble Sets in action!](teaser.png)](https://josuakrause.github.io/bubblesets-js/)
 
 Usage:
 
@@ -32,6 +34,7 @@ var outline = new PointPath(list).transform([
 // outline is a path that can be used for the attribute d of a SVG path element
 ```
 
-See also the [example](http://josuakrause.github.io/bubblesets-js/) (add rectangles by clicking with the left or right mouse button).
+See also the [demo](https://josuakrause.github.io/bubblesets-js/) (add rectangles by clicking with the left or right mouse button), a more advanced [example](https://josuakrause.github.io/bubblesets-js/cliques.html), and the [benchmark](https://josuakrause.github.io/bubblesets-js/bench.html).
 
-This is a one-to-one translation of the Java code. If you're missing a feature from the Java version or find a bug please open an [issue](https://github.com/JosuaKrause/bubblesets-js/issues/new). [Pull requests](https://github.com/JosuaKrause/bubblesets-js/compare) are also welcome.
+This implementation is based on the Java code originally written by Christopher Collins.
+If you're missing a feature from the Java version or find a bug please open an [issue](https://github.com/JosuaKrause/bubblesets-js/issues/new). [Pull requests](https://github.com/JosuaKrause/bubblesets-js/compare) are also welcome.

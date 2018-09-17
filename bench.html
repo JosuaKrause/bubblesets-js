@@ -63,8 +63,9 @@ function runBench() {
       return outline.toString();
     }
 
+    var runs = 5;
     var res = null;
-    for(var warm = 0;warm < 5;warm += 1) {
+    for(var warm = 0;warm < runs;warm += 1) {
       var tmp = doRun();
       if(res && res !== tmp) {
         console.warn("inconsistent result");
@@ -74,14 +75,14 @@ function runBench() {
     }
     var time = null;
     timer("benchmark");
-    for(var warm = 0;warm < 5;warm += 1) {
+    for(var warm = 0;warm < runs;warm += 1) {
       var finalRes = doRun();
       if(finalRes !== res) {
         console.warn("inconsistent end result");
       }
       time = timerEnd("benchmark");
     }
-    span.textContent = time + "ms";
+    span.textContent = (2*runs) + " runs; " + time + "ms avg. per run";
     path.setAttribute("d", finalRes);
   }, 100);
 }
