@@ -2,6 +2,7 @@
   "name": "bubblesets",
   "version": "1.0.0",
   "description": "A JavaScript implementation of Bubble Sets.",
+  "type": "module",
   "main": "bubblesets.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

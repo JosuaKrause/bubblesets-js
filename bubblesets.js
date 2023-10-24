@@ -2,7 +2,7 @@
  * Created by Josua Krause on 2014-10-25.
  */
 
-class Rectangle {
+export class Rectangle {
   constructor(_rect) {
     this._x = 0;
     this._y = 0;
@@ -165,7 +165,7 @@ class Rectangle {
 } // Rectangle
 
 
-class Point {
+export class Point {
   constructor(ax, ay) {
     this._x = +ax;
     this._y = +ay;
@@ -199,7 +199,7 @@ class Point {
 } // Point
 
 
-class PointList {
+export class PointList {
   constructor(size) {
     this._size = size;
     this._els = 0;
@@ -224,46 +224,48 @@ class PointList {
     return test.x() === p.x() && test.y() === p.y();
   }
 
-  this.isFirst = function(p) {
-    if(!els) return false;
-    var test = arr[0];
+  isFirst(p) {
+    if(!this._els) return false;
+    var test = this._arr[0];
     return test.x() === p.x() && test.y() === p.y();
-  };
-  this.list = function() {
-    return arr.filter(function(p) {
-      return p;
-    }).map(function(p) {
-      return p.get();
-    });
-  };
-  this.clear = function() {
-    for(var i = 0;i < arr.length;i += 1) {
-      arr[i] = null; // nulling is cheaper than deleting or reallocating
+  }
+
+  list() {
+    return this._arr.filter((p) => p).map((p) => p.get());
+  }
+
+  clear() {
+    for(let ix = 0;ix < this._arr.length;ix += 1) {
+      this._arr[ix] = null; // nulling is cheaper than deleting or reallocating
     }
-    set = {};
-    els = 0;
-  };
-  this.get = function(ix) {
-    return arr[ix];
-  };
-  this.size = function() {
-    return els;
-  };
-}; // PointList
+    this._set = {};
+    this._els = 0;
+  }
 
-function Line(_x1, _y1, _x2, _y2) {
-  var that = this;
-  var x1 = +_x1;
-  var y1 = +_y1;
-  var x2 = +_x2;
-  var y2 = +_y2;
+  get(ix) {
+    return this._arr[ix];
+  }
 
-  this.rect = function() {
-    var minX = Math.min(x1, x2);
-    var minY = Math.min(y1, y2);
-    var maxX = Math.max(x1, x2);
-    var maxY = Math.max(y1, y2);
-    var res = new Rectangle({
+  size() {
+    return this._els;
+  }
+} // PointList
+
+
+export class Line {
+  constructor(_x1, _y1, _x2, _y2) {
+    this._x1 = +_x1;
+    this._y1 = +_y1;
+    this._x2 = +_x2;
+    this._y2 = +_y2;
+  }
+
+  rect() {
+    const minX = Math.min(this._x1, this._x2);
+    const minY = Math.min(this._y1, this._y2);
+    const maxX = Math.max(this._x1, this._x2);
+    const maxY = Math.max(this._y1, this._y2);
+    const res = new Rectangle({
       x: minX,
       y: minY,
       width: maxX - minX,
@@ -271,257 +273,290 @@ function Line(_x1, _y1, _x2, _y2) {
     });
     return res;
   }
-  this.x1 = function(_) {
-    if(!arguments.length) return x1;
-    x1 = _;
-  };
-  this.x2 = function(_) {
-    if(!arguments.length) return x2;
-    x2 = _;
-  };
-  this.y1 = function(_) {
-    if(!arguments.length) return y1;
-    y1 = _;
-  };
-  this.y2 = function(_) {
-    if(!arguments.length) return y2;
-    y2 = _;
-  };
+
+  x1(_) {
+    if(!arguments.length) return this._x1;
+    this._x1 = _;
+  }
+
+  x2(_) {
+    if(!arguments.length) return this._x2;
+    this._x2 = _;
+  }
+
+  y1(_) {
+    if(!arguments.length) return this._y1;
+    this._y1 = _;
+  }
+
+  y2(_) {
+    if(!arguments.length) return this._y2;
+    this._y2 = _;
+  }
+
   // whether an infinite line to positive x from the point p will cut through the line
-  this.cuts = function(p) {
-    if(y1 === y2) return false;
-    var y = p.y();
-    if((y < y1 && y <= y2) || (y > y1 && y >= y2)) return false;
-    var x = p.x();
-    if(x > x1 && x >= x2) return false;
-    if(x < x1 && x <= x2) return true;
-    var cross = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+  cuts(p) {
+    if(this._y1 === this._y2) return false;
+    const y = p.y();
+    if((y < this._y1 && y <= this._y2) || (y > this._y1 && y >= this._y2)) return false;
+    const x = p.x();
+    if(x > this._x1 && x >= this._x2) return false;
+    if(x < this._x1 && x <= this._x2) return true;
+    const cross = this._x1 + (y - this._y1) * (this._x2 - this._x1) / (this._y2 - this._y1);
     return x <= cross;
-  };
-  this.ptSegDistSq = function(x, y) {
-    return BubbleSet.linePtSegDistSq(x1, y1, x2, y2, x, y);
-  };
-  this.ptClose = function(x, y, r) {
+  }
+
+  ptSegDistSq(x, y) {
+    return BubbleSet.linePtSegDistSq(this._x1, this._y1, this._x2, this._y2, x, y);
+  }
+
+  ptClose(x, y, r) {
     // check whether the point is outside the bounding rectangle with padding r
-    if(x1 < x2) {
-      if(x < x1 - r || x > x2 + r) return false;
+    if(this._x1 < this._x2) {
+      if(x < this._x1 - r || x > this._x2 + r) return false;
     } else {
-      if(x < x2 - r || x > x1 + r) return false;
+      if(x < this._x2 - r || x > this._x1 + r) return false;
     }
-    if(y1 < y2) {
-      if(y < y1 - r || y > y2 + r) return false;
+    if(this._y1 < this._y2) {
+      if(y < this._y1 - r || y > this._y2 + r) return false;
     } else {
-      if(y < y2 - r || y > y1 + r) return false;
+      if(y < this._y2 - r || y > this._y1 + r) return false;
     }
     return true;
-  };
-}; // Line
+  }
+} // Line
 
-function Area(width, height) {
-  var size = width * height;
-  var buff = new Float32Array(size);
 
-  this.bound = function(pos, isX) {
+export class Area {
+  constructor(width, height) {
+    this._width = width
+    this._height = height
+    this._size = width * height
+    this._buff = new Float32Array(size);
+  }
+
+  bound(pos, isX) {
     if(pos < 0) return 0;
-    return Math.min(pos, (isX ? width : height) - 1);
-  };
-  this.get = function(x, y) {
-    if(x < 0 || x >= width || y < 0 || y >= height) {
-      console.warn("Area.get out of bounds", x, y, width, height);
+    return Math.min(pos, (isX ? this._width : this._height) - 1);
+  }
+
+  get(x, y) {
+    if(x < 0 || x >= this._width || y < 0 || y >= this._height) {
+      console.warn("Area.get out of bounds", x, y, this._width, this._height);
       return Number.NaN;
     }
-    return buff[x + y * width];
-  };
-  this.set = function(x, y, v) {
-    if(x < 0 || x >= width || y < 0 || y >= height) {
-      console.warn("Area.set out of bounds", x, y, width, height);
+    return this._buff[x + y * this._width];
+  }
+
+  set(x, y, v) {
+    if(x < 0 || x >= this._width || y < 0 || y >= this._height) {
+      console.warn("Area.set out of bounds", x, y, this._width, this._height);
       return;
     }
-    buff[x + y * width] = v;
-  };
-  this.width = function() {
-    return width;
-  };
-  this.height = function() {
-    return height;
-  };
+    this._buff[x + y * this._width] = v;
+  }
+
+  width() {
+    return this._width;
+  }
+
+  height() {
+    return this._height;
+  }
 } // Area
 
-function Intersection(p, s) {
-  var point = p;
-  var state = s;
 
-  this.getState = function() {
-    return state;
-  };
-  this.getPoint = function() {
-    return point;
+export class Intersection {
+  constructor(p, s) {
+    this._point = p;
+    this._state = s;
+  }
+
+  getState() {
+    return this._state;
+  }
+
+  getPoint() {
+    return this._point;
+  }
+
+  static POINT = 1;
+  static PARALLEL = 2;
+  static COINCIDENT = 3;
+  static NONE = 4;
+
+  static intersectLineLine(la, lb) {
+    const uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
+            - (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
+    const ubT = (la.x2() - la.x1()) * (la.y1() - lb.y1())
+            - (la.y2() - la.y1()) * (la.x1() - lb.x1());
+    const uB  = (lb.y2() - lb.y1()) * (la.x2() - la.x1())
+            - (lb.x2() - lb.x1()) * (la.y2() - la.y1());
+    if(uB) {
+      const ua = uaT / uB;
+      const ub = ubT / uB;
+      if(0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
+        const p = new Point(la.x1() + ua * (la.x2() - la.x1()), la.y1() + ua * (la.y2() - la.y1()));
+        return new Intersection(p, Intersection.POINT);
+      }
+      return new Intersection(null, Intersection.NONE);
+    }
+    return new Intersection(null, (uaT === 0 || ubT === 0) ? Intersection.COINCIDENT : Intersection.PARALLEL);
+  }
+
+  static fractionAlongLineA(la, lb) {
+    const uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
+            - (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
+    const ubT = (la.x2() - la.x1()) * (la.y1() - lb.y1())
+            - (la.y2() - la.y1()) * (la.x1() - lb.x1());
+    const uB  = (lb.y2() - lb.y1()) * (la.x2() - la.x1())
+            - (lb.x2() - lb.x1()) * (la.y2() - la.y1());
+    if(uB) {
+      const ua = uaT / uB;
+      const ub = ubT / uB;
+      if(0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
+        return ua;
+      }
+    }
+    return Number.POSITIVE_INFINITY;
+  }
+
+  // we can move them out here since there can't be any concurrency
+  static INTERSECTION_PLINE = new Line(0.0, 0.0, 0.0, 0.0);
+
+  static fractionToLineCenter(bounds, line) {
+    let minDistance = Number.POSITIVE_INFINITY;
+    let countIntersections = 0;
+
+    const testLine = (xa, ya, xb, yb) => {
+      Intersection.INTERSECTION_PLINE.x1(xa);
+      Intersection.INTERSECTION_PLINE.y1(ya);
+      Intersection.INTERSECTION_PLINE.x2(xb);
+      Intersection.INTERSECTION_PLINE.y2(yb);
+      let testDistance = Intersection.fractionAlongLineA(line, Intersection.INTERSECTION_PLINE);
+      testDistance = Math.abs(testDistance - 0.5);
+      if((testDistance >= 0) && (testDistance <= 1)) {
+        countIntersections += 1;
+        if(testDistance < minDistance) {
+          minDistance = testDistance;
+        }
+      }
+    };
+
+    // top
+    testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
+    // left
+    testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
+    if(countIntersections > 1) return minDistance;
+    // bottom
+    testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
+    if(countIntersections > 1) return minDistance;
+    // right
+    testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
+    // if no intersection, return -1
+    if(countIntersections === 0) return -1;
+    return minDistance;
+  }
+
+  static fractionToLineEnd(bounds, line) {
+    let minDistance = Number.POSITIVE_INFINITY;
+    let countIntersections = 0;
+
+    const testLine = (xa, ya, xb, yb) => {
+      const testDistance = Intersection.fractionAlongLineA(line, new Line(xa, ya, xb, yb));
+      if((testDistance >= 0) && (testDistance <= 1)) {
+        countIntersections += 1;
+        if(testDistance < minDistance) {
+          minDistance = testDistance;
+        }
+      }
+    };
+
+    // top
+    testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
+    // left
+    testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
+    if(countIntersections > 1) return minDistance;
+    // bottom
+    testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
+    if(countIntersections > 1) return minDistance;
+    // right
+    testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
+    // if no intersection, return -1
+    if(countIntersections === 0) return -1;
+    return minDistance;
+  }
+
+  static testIntersection(line, bounds, intersections) {
+    let countIntersections = 0;
+
+    const fillIntersection = (ix, xa, ya, xb, yb) => {
+      intersections[ix] = Intersection.intersectLineLine(line, new Line(xa, ya, xb, yb));
+      if(intersections[ix].getState() === Intersection.POINT) {
+        countIntersections += 1;
+      }
+    };
+
+    // top
+    fillIntersection(0, bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
+    // left
+    fillIntersection(1, bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
+    // bottom
+    fillIntersection(2, bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
+    // right
+    fillIntersection(3, bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
+    return countIntersections;
   };
 } // Intersection
-Intersection.POINT = 1;
-Intersection.PARALLEL = 2;
-Intersection.COINCIDENT = 3;
-Intersection.NONE = 4;
-Intersection.intersectLineLine = function(la, lb) {
-  var uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
-          - (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
-  var ubT = (la.x2() - la.x1()) * (la.y1() - lb.y1())
-          - (la.y2() - la.y1()) * (la.x1() - lb.x1());
-  var uB  = (lb.y2() - lb.y1()) * (la.x2() - la.x1())
-          - (lb.x2() - lb.x1()) * (la.y2() - la.y1());
-  if(uB) {
-    var ua = uaT / uB;
-    var ub = ubT / uB;
-    if(0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
-      var p = new Point(la.x1() + ua * (la.x2() - la.x1()), la.y1() + ua * (la.y2() - la.y1()));
-      return new Intersection(p, Intersection.POINT);
-    }
-    return new Intersection(null, Intersection.NONE);
-  }
-  return new Intersection(null, (uaT === 0 || ubT === 0) ? Intersection.COINCIDENT : Intersection.PARALLEL);
-};
-Intersection.fractionAlongLineA = function(la, lb) {
-  var uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
-          - (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
-  var ubT = (la.x2() - la.x1()) * (la.y1() - lb.y1())
-          - (la.y2() - la.y1()) * (la.x1() - lb.x1());
-  var uB  = (lb.y2() - lb.y1()) * (la.x2() - la.x1())
-          - (lb.x2() - lb.x1()) * (la.y2() - la.y1());
-  if(uB) {
-    var ua = uaT / uB;
-    var ub = ubT / uB;
-    if(0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
-      return ua;
-    }
-  }
-  return Number.POSITIVE_INFINITY;
-};
-// we can move them out here since there can't be any concurrency
-var intersectionPline = new Line(0.0, 0.0, 0.0, 0.0);
-Intersection.fractionToLineCenter = function(bounds, line) {
-  var minDistance = Number.POSITIVE_INFINITY;
-  var countIntersections = 0;
 
-  function testLine(xa, ya, xb, yb) {
-    intersectionPline.x1(xa);
-    intersectionPline.y1(ya);
-    intersectionPline.x2(xb);
-    intersectionPline.y2(yb);
-    var testDistance = Intersection.fractionAlongLineA(line, intersectionPline);
-    testDistance = Math.abs(testDistance - 0.5);
-    if((testDistance >= 0) && (testDistance <= 1)) {
-      countIntersections += 1;
-      if(testDistance < minDistance) {
-        minDistance = testDistance;
-      }
-    }
+
+export class MarchingSquares {
+  constructor(contour, potentialArea, step, t) {
+    this._contour = contour;
+    this._potentialArea = potentialArea;
+    this._step = step;
+    this._threshold = t;
+    this._direction = MarchingSquares.S;
+    this._marched = false;
   }
 
-  // top
-  testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
-  // left
-  testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
-  if(countIntersections > 1) return minDistance;
-  // bottom
-  testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
-  if(countIntersections > 1) return minDistance;
-  // right
-  testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
-  // if no intersection, return -1
-  if(countIntersections === 0) return -1;
-  return minDistance;
-};
-Intersection.fractionToLineEnd = function(bounds, line) {
-  var minDistance = Number.POSITIVE_INFINITY;
-  var countIntersections = 0;
-
-  function testLine(xa, ya, xb, yb) {
-    var testDistance = Intersection.fractionAlongLineA(line, new Line(xa, ya, xb, yb));
-    if((testDistance >= 0) && (testDistance <= 1)) {
-      countIntersections += 1;
-      if(testDistance < minDistance) {
-        minDistance = testDistance;
-      }
-    }
-  }
-
-  // top
-  testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
-  // left
-  testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
-  if(countIntersections > 1) return minDistance;
-  // bottom
-  testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
-  if(countIntersections > 1) return minDistance;
-  // right
-  testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
-  // if no intersection, return -1
-  if(countIntersections === 0) return -1;
-  return minDistance;
-};
-Intersection.testIntersection = function(line, bounds, intersections) {
-  var countIntersections = 0;
-
-  function fillIntersection(ix, xa, ya, xb, yb) {
-    intersections[ix] = Intersection.intersectLineLine(line, new Line(xa, ya, xb, yb));
-    if(intersections[ix].getState() === Intersection.POINT) {
-      countIntersections += 1;
-    }
-  }
-
-  // top
-  fillIntersection(0, bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
-  // left
-  fillIntersection(1, bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
-  // bottom
-  fillIntersection(2, bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
-  // right
-  fillIntersection(3, bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
-  return countIntersections;
-};
-
-function MarchingSquares(contour, potentialArea, step, t) {
-  var direction = MarchingSquares.S;
-  var threshold = t;
-  var marched = false;
-
-  function updateDir(x, y, dir, res) {
-    var v = potentialArea.get(x, y);
+  updateDir(x, y, dir, res) {
+    const v = this._potentialArea.get(x, y);
     if(isNaN(v)) return v;
     if(v > threshold) return dir + res;
     return dir;
   }
 
-  function getState(x, y) {
-    var dir = 0;
+  getState(x, y) {
+    let dir = 0;
     dir = updateDir(x, y, dir, 1);
     dir = updateDir(x + 1, y, dir, 2);
     dir = updateDir(x, y + 1, dir, 4);
     dir = updateDir(x + 1, y + 1, dir, 8);
     if(isNaN(dir)) {
-      console.warn("marched out of bounds: " + x + " " + y + " bounds: " + potentialArea.width() + " " + potentialArea.height());
+      console.warn("marched out of bounds: " + x + " " + y + " bounds: " + this._potentialArea.width() + " " + this._potentialArea.height());
       return -1;
     }
     return dir;
   }
 
-  function doMarch(xpos, ypos) {
-    var x = xpos;
-    var y = ypos;
+  doMarch(xpos, ypos) {
+    let x = xpos;
+    let y = ypos;
     for(;;) { // iterative version of end recursion
-      var p = new Point(x * step, y * step);
+      const p = new Point(x * this._step, y * this._step);
       // check if we're back where we started
-      if(contour.contains(p)) {
-        if(!contour.isFirst(p)) {
+      if(this._contour.contains(p)) {
+        if(!this._contour.isFirst(p)) {
           // encountered a loop but haven't returned to start; will change
           // direction using conditionals and continue back to start
         } else {
           return true;
         }
       } else {
-        contour.add(p);
+        this._contour.add(p);
       }
-      var state = getState(x, y);
+      const state = this.getState(x, y);
       // x, y are upper left of 2X2 marching square
       switch(state) {
         case -1:
@@ -530,35 +565,35 @@ function MarchingSquares(contour, potentialArea, step, t) {
         case 3:
         case 2:
         case 7:
-          direction = MarchingSquares.E;
+          this._direction = MarchingSquares.E;
           break;
         case 12:
         case 14:
         case 4:
-          direction = MarchingSquares.W;
+          this._direction = MarchingSquares.W;
           break;
         case 6:
-          direction = (direction === MarchingSquares.N) ? MarchingSquares.W : MarchingSquares.E;
+          this._direction = (this._direction === MarchingSquares.N) ? MarchingSquares.W : MarchingSquares.E;
           break;
         case 1:
         case 13:
         case 5:
-          direction = MarchingSquares.N;
+          this._direction = MarchingSquares.N;
           break;
         case 9:
-          direction = (direction === MarchingSquares.E) ? MarchingSquares.N : MarchingSquares.S;
+          this._direction = (this._direction === MarchingSquares.E) ? MarchingSquares.N : MarchingSquares.S;
           break;
         case 10:
         case 8:
         case 11:
-          direction = MarchingSquares.S;
+          this._direction = MarchingSquares.S;
           break;
         default:
           console.warn("Marching squares invalid state: " + state);
           return true;
       }
 
-      switch(direction) {
+      switch(this._direction) {
         case MarchingSquares.N:
           y -= 1; // up
           break;
@@ -576,27 +611,26 @@ function MarchingSquares(contour, potentialArea, step, t) {
           return true;
       }
     }
-    console.warn("should not be reachable...");
-    return true;
   }
 
-  this.march = function() {
-    for(var x = 0;x < potentialArea.width() && !marched;x += 1) {
-      for(var y = 0;y < potentialArea.height() && !marched;y += 1) {
-        if(potentialArea.get(x, y) > threshold && getState(x, y) != 15) {
-          marched = doMarch(x, y);
+  march() {
+    for(let x = 0;x < this._potentialArea.width() && !this._marched;x += 1) {
+      for(let y = 0;y < this._potentialArea.height() && !this._marched;y += 1) {
+        if(this._potentialArea.get(x, y) > this._threshold && this.getState(x, y) != 15) {
+          this._marched = this.doMarch(x, y);
         }
       }
     }
-    return marched;
+    return this._marched;
   };
+  static N = 0;
+  static S = 1;
+  static E = 2;
+  static W = 3;
 } // MarchingSquares
-MarchingSquares.N = 0;
-MarchingSquares.S = 1;
-MarchingSquares.E = 2;
-MarchingSquares.W = 3;
 
-class BubbleSet {
+
+export class BubbleSet {
   var maxRoutingIterations = BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS;
   var maxMarchingIterations = BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS;
   var pixelGroup = BubbleSet.DEFAULT_PIXEL_GROUP;
