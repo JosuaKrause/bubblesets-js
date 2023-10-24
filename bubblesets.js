@@ -1,572 +1,602 @@
 /**
- * Created by krause on 2014-10-25.
+ * Created by Josua Krause on 2014-10-25.
  */
-"use strict";
 
-function BubbleSet() {
-  var thatBS = this;
-
-  function Rectangle(_rect) {
-    var that = this;
-    var x = 0;
-    var y = 0;
-    var width = 0;
-    var height = 0;
-    var centroidDistance = 0;
-
-    this.rect = function(r) {
-      if(!arguments.length) return {
-        x: x,
-        y: y,
-        width: width,
-        height: height
-      };
-      x = +r.x;
-      y = +r.y;
-      width = +r.width;
-      height = +r.height;
-    };
-    this.minX = function() {
-      return x;
-    };
-    this.minY = function() {
-      return y;
-    };
-    this.maxX = function() {
-      return x + width;
-    };
-    this.maxY = function() {
-      return y + height;
-    };
-    this.centerX = function() {
-      return x + width * 0.5;
-    };
-    this.centerY = function() {
-      return y + height * 0.5;
-    };
-    this.width = function() {
-      return width;
-    };
-    this.height = function() {
-      return height;
-    };
-    this.centroidDistance = function(cd) {
-      if(!arguments.length) return centroidDistance;
-      centroidDistance = cd;
-    };
-    this.cmp = function(rect) {
-      if(centroidDistance < rect.centroidDistance()) return -1;
-      if(centroidDistance > rect.centroidDistance()) return 0;
-      return 0;
-    };
-    this.add = function(rect) {
-      var tmpx = Math.min(that.minX(), rect.minX());
-      var tmpy = Math.min(that.minY(), rect.minY());
-      var maxX = Math.max(that.maxX(), rect.maxX());
-      var maxY = Math.max(that.maxY(), rect.maxY());
-      x = tmpx;
-      y = tmpy;
-      width = maxX - x;
-      height = maxY - y;
-    };
-    this.contains = function(p) {
-      var px = p.x();
-      var py = p.y();
-      return that.containsPt(px, py);
-    };
-    this.containsPt = function(px, py) {
-      if(px < x || px >= x + width) return false;
-      return !(py < y || py >= y + height);
-    };
-    this.intersects = function(rect) {
-      if(that.width() <= 0 || that.height() <= 0 || rect.width() <= 0 || rect.height() <= 0) return false;
-      return (rect.maxX() > that.minX() &&
-              rect.maxY() > that.minY() &&
-              rect.minX() < that.maxX() &&
-              rect.minY() < that.maxY());
-    };
-    this.intersectsLine = function(line) {
-      var x1 = line.x1();
-      var y1 = line.y1();
-      var x2 = line.x2();
-      var y2 = line.y2();
-      // taken from JDK 8 java.awt.geom.Rectangle2D.Double#intersectsLine(double, double, double, double)
-      var out1;
-      var out2;
-      if((out2 = that.outcode(x2, y2)) === 0) {
-        return true;
-      }
-      while((out1 = that.outcode(x1, y1)) !== 0) {
-        if((out1 & out2) !== 0) {
-          return false;
-        }
-        if((out1 & (Rectangle.OUT_LEFT | Rectangle.OUT_RIGHT)) !== 0) {
-          var x = that.minX();
-          if((out1 & Rectangle.OUT_RIGHT) !== 0) {
-            x += that.width();
-          }
-          y1 = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
-          x1 = x;
-        } else {
-          var y = that.minY();
-          if((out1 & Rectangle.OUT_BOTTOM) !== 0) {
-            y += that.height();
-          }
-          x1 = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
-          y1 = y;
-        }
-      }
-      return true;
-    };
-    this.outcode = function(px, py) {
-      // taken from JDK 8 java.awt.geom.Rectangle2D.Double#outcode(double, double)
-      var out = 0;
-      if(width <= 0) {
-        out |= Rectangle.OUT_LEFT | Rectangle.OUT_RIGHT;
-      } else if(px < x) {
-        out |= Rectangle.OUT_LEFT;
-      } else if(px > x + width) {
-        out |= Rectangle.OUT_RIGHT;
-      }
-      if(height <= 0) {
-        out |= Rectangle.OUT_TOP | Rectangle.OUT_BOTTOM;
-      } else if (py < y) {
-        out |= Rectangle.OUT_TOP;
-      } else if (py > y + height) {
-        out |= Rectangle.OUT_BOTTOM;
-      }
-      return out;
-    };
-
-    if(arguments.length && _rect) {
+class Rectangle {
+  constructor(_rect) {
+    this._x = 0;
+    this._y = 0;
+    this._width = 0;
+    this._height = 0;
+    this._centroidDistance = 0;
+    if(_rect) {
       this.rect(_rect);
     }
-  } // Rectangle
-  Rectangle.prototype.toString = function() {
+  }
+
+  rect(r) {
+    if(!arguments.length) return {
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+    };
+    this._x = +r.x;
+    this._y = +r.y;
+    this._width = +r.width;
+    this._height = +r.height;
+  }
+
+  minX() {
+    return this._x;
+  }
+
+  minY() {
+    return this._y;
+  }
+
+  maxX() {
+    return this._x + this._width;
+  }
+
+  maxY() {
+    return this._y + this._height;
+  }
+
+  centerX() {
+    return this._x + this._width * 0.5;
+  }
+
+  centerY() {
+    return this._y + this._height * 0.5;
+  }
+
+  width() {
+    return this._width;
+  }
+
+  height() {
+    return this._height;
+  }
+
+  centroidDistance(cd) {
+    if(!arguments.length) return this._centroidDistance;
+    this._centroidDistance = cd;
+  }
+
+  cmp(rect) {
+    if(this._centroidDistance < rect.centroidDistance()) return -1;
+    if(this._centroidDistance > rect.centroidDistance()) return 0;
+    return 0;
+  }
+
+  add(rect) {
+    const tmpx = Math.min(this.minX(), rect.minX());
+    const tmpy = Math.min(this.minY(), rect.minY());
+    const maxX = Math.max(this.maxX(), rect.maxX());
+    const maxY = Math.max(this.maxY(), rect.maxY());
+    this._x = tmpx;
+    this._y = tmpy;
+    this._width = maxX - this._x;
+    this._height = maxY - this._y;
+  }
+
+  contains(p) {
+    const px = p.x();
+    const py = p.y();
+    return this.containsPt(px, py);
+  }
+
+  containsPt(px, py) {
+    if(px < this._x || px >= this._x + this._width) return false;
+    return !(py < this._y || py >= this._y + this._height);
+  }
+
+  intersects(rect) {
+    if(this.width() <= 0 || this.height() <= 0 || rect.width() <= 0 || rect.height() <= 0) return false;
+    return (rect.maxX() > this.minX() &&
+            rect.maxY() > this.minY() &&
+            rect.minX() < this.maxX() &&
+            rect.minY() < this.maxY());
+  }
+
+  intersectsLine(line) {
+    const x1 = line.x1();
+    const y1 = line.y1();
+    const x2 = line.x2();
+    const y2 = line.y2();
+    // taken from JDK 8 java.awt.geom.Rectangle2D.Double#intersectsLine(double, double, double, double)
+    let out1;
+    let out2;
+    if((out2 = this.outcode(x2, y2)) === 0) {
+      return true;
+    }
+    while((out1 = this.outcode(x1, y1)) !== 0) {
+      if((out1 & out2) !== 0) {
+        return false;
+      }
+      if((out1 & (Rectangle.OUT_LEFT | Rectangle.OUT_RIGHT)) !== 0) {
+        let x = this.minX();
+        if((out1 & Rectangle.OUT_RIGHT) !== 0) {
+          x += this.width();
+        }
+        y1 = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
+        x1 = x;
+      } else {
+        let y = this.minY();
+        if((out1 & Rectangle.OUT_BOTTOM) !== 0) {
+          y += this.height();
+        }
+        x1 = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+        y1 = y;
+      }
+    }
+    return true;
+  }
+
+  outcode(px, py) {
+    // taken from JDK 8 java.awt.geom.Rectangle2D.Double#outcode(double, double)
+    let out = 0;
+    if(this._width <= 0) {
+      out |= Rectangle.OUT_LEFT | Rectangle.OUT_RIGHT;
+    } else if(px < this._x) {
+      out |= Rectangle.OUT_LEFT;
+    } else if(px > this._x + this._width) {
+      out |= Rectangle.OUT_RIGHT;
+    }
+    if(this._height <= 0) {
+      out |= Rectangle.OUT_TOP | Rectangle.OUT_BOTTOM;
+    } else if (py < this._y) {
+      out |= Rectangle.OUT_TOP;
+    } else if (py > this._y + this._height) {
+      out |= Rectangle.OUT_BOTTOM;
+    }
+    return out;
+  }
+
+  toString() {
     return "Rectangle[x=" + this.minX() + ", y=" + this.minY() + ", w=" + this.width() + ", h=" + this.height() + "]";
-  };
-  Rectangle.OUT_LEFT = 1;
-  Rectangle.OUT_TOP = 2;
-  Rectangle.OUT_RIGHT = 4;
-  Rectangle.OUT_BOTTOM = 8;
+  }
 
-  function Point(ax, ay) {
-    var x = +ax;
-    var y = +ay;
-    this.x = function(_) {
-      if(!arguments.length) return x;
-      x = _;
-    };
-    this.y = function(_) {
-      if(!arguments.length) return y;
-      y = _;
-    };
-    this.distanceSq = function(p) {
-      return Point.ptsDistanceSq(x, y, p.x(), p.y());
-    };
-    this.get = function() {
-      return [ x, y ];
-    };
-  } // Point
-  Point.ptsDistanceSq = function(x1, y1, x2, y2) {
+  static OUT_LEFT = 1;
+  static OUT_TOP = 2;
+  static OUT_RIGHT = 4;
+  static OUT_BOTTOM = 8;
+} // Rectangle
+
+
+class Point {
+  constructor(ax, ay) {
+    this._x = +ax;
+    this._y = +ay;
+  }
+
+  x(_) {
+    if(!arguments.length) return this._x;
+    this._x = _;
+  }
+
+  y(_) {
+    if(!arguments.length) return this._y;
+    this._y = _;
+  }
+
+  distanceSq(p) {
+    return Point.ptsDistanceSq(this._x, this._y, p.x(), p.y());
+  }
+
+  get() {
+    return [ this._x, this._y ];
+  }
+
+  static ptsDistanceSq(x1, y1, x2, y2) {
     return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-  };
-  Point.doublePointsEqual = function(x1, y1, x2, y2, delta) {
+  }
+
+  static doublePointsEqual(x1, y1, x2, y2, delta) {
     return Point.ptsDistanceSq(x1, y1, x2, y2) < delta * delta;
+  }
+} // Point
+
+
+class PointList {
+  constructor(size) {
+    this._size = size;
+    this._els = 0;
+    this._arr = [];
+    this._arr.length = size; // pre-allocating
+    this._set = {};
+  }
+
+  static hash(p) {
+    return p.x() + "x" + p.y();
+  }
+
+  add(p) {
+    this._set[PointList.hash(p)] = p;
+    this._arr[this._els] = p;
+    this._els += 1;
+  }
+
+  contains(p) {
+    const test = this._set[PointList.hash(p)];
+    if(!test) return false;
+    return test.x() === p.x() && test.y() === p.y();
+  }
+
+  this.isFirst = function(p) {
+    if(!els) return false;
+    var test = arr[0];
+    return test.x() === p.x() && test.y() === p.y();
   };
-
-  function PointList(size) {
-    var els = 0;
-    var arr = [];
-    arr.length = size; // pre-allocating
-    var set = {};
-
-    function hash(p) {
-      return p.x() + "x" + p.y();
-    }
-
-    this.add = function(p) {
-      set[hash(p)] = p;
-      arr[els] = p;
-      els += 1;
-    };
-    this.contains = function(p) {
-      var test = set[hash(p)];
-      if(!test) return false;
-      return test.x() === p.x() && test.y() === p.y();
-    };
-    this.isFirst = function(p) {
-      if(!els) return false;
-      var test = arr[0];
-      return test.x() === p.x() && test.y() === p.y();
-    };
-    this.list = function() {
-      return arr.filter(function(p) {
-        return p;
-      }).map(function(p) {
-        return p.get();
-      });
-    };
-    this.clear = function() {
-      for(var i = 0;i < arr.length;i += 1) {
-        arr[i] = null; // nulling is cheaper than deleting or reallocating
-      }
-      set = {};
-      els = 0;
-    };
-    this.get = function(ix) {
-      return arr[ix];
-    };
-    this.size = function() {
-      return els;
-    };
-  }; // PointList
-
-  function Line(_x1, _y1, _x2, _y2) {
-    var that = this;
-    var x1 = +_x1;
-    var y1 = +_y1;
-    var x2 = +_x2;
-    var y2 = +_y2;
-
-    this.rect = function() {
-      var minX = Math.min(x1, x2);
-      var minY = Math.min(y1, y2);
-      var maxX = Math.max(x1, x2);
-      var maxY = Math.max(y1, y2);
-      var res = new Rectangle({
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-      });
-      return res;
-    }
-    this.x1 = function(_) {
-      if(!arguments.length) return x1;
-      x1 = _;
-    };
-    this.x2 = function(_) {
-      if(!arguments.length) return x2;
-      x2 = _;
-    };
-    this.y1 = function(_) {
-      if(!arguments.length) return y1;
-      y1 = _;
-    };
-    this.y2 = function(_) {
-      if(!arguments.length) return y2;
-      y2 = _;
-    };
-    // whether an infinite line to positive x from the point p will cut through the line
-    this.cuts = function(p) {
-      if(y1 === y2) return false;
-      var y = p.y();
-      if((y < y1 && y <= y2) || (y > y1 && y >= y2)) return false;
-      var x = p.x();
-      if(x > x1 && x >= x2) return false;
-      if(x < x1 && x <= x2) return true;
-      var cross = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
-      return x <= cross;
-    };
-    this.ptSegDistSq = function(x, y) {
-      return BubbleSet.linePtSegDistSq(x1, y1, x2, y2, x, y);
-    };
-    this.ptClose = function(x, y, r) {
-      // check whether the point is outside the bounding rectangle with padding r
-      if(x1 < x2) {
-        if(x < x1 - r || x > x2 + r) return false;
-      } else {
-        if(x < x2 - r || x > x1 + r) return false;
-      }
-      if(y1 < y2) {
-        if(y < y1 - r || y > y2 + r) return false;
-      } else {
-        if(y < y2 - r || y > y1 + r) return false;
-      }
-      return true;
-    };
-  }; // Line
-
-  function Area(width, height) {
-    var size = width * height;
-    var buff = new Float32Array(size);
-
-    this.bound = function(pos, isX) {
-      if(pos < 0) return 0;
-      return Math.min(pos, (isX ? width : height) - 1);
-    };
-    this.get = function(x, y) {
-      if(x < 0 || x >= width || y < 0 || y >= height) {
-        console.warn("Area.get out of bounds", x, y, width, height);
-        return Number.NaN;
-      }
-      return buff[x + y * width];
-    };
-    this.set = function(x, y, v) {
-      if(x < 0 || x >= width || y < 0 || y >= height) {
-        console.warn("Area.set out of bounds", x, y, width, height);
-        return;
-      }
-      buff[x + y * width] = v;
-    };
-    this.width = function() {
-      return width;
-    };
-    this.height = function() {
-      return height;
-    };
-  } // Area
-
-  function Intersection(p, s) {
-    var point = p;
-    var state = s;
-
-    this.getState = function() {
-      return state;
-    };
-    this.getPoint = function() {
-      return point;
-    };
-  } // Intersection
-  Intersection.POINT = 1;
-  Intersection.PARALLEL = 2;
-  Intersection.COINCIDENT = 3;
-  Intersection.NONE = 4;
-  Intersection.intersectLineLine = function(la, lb) {
-    var uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
-            - (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
-    var ubT = (la.x2() - la.x1()) * (la.y1() - lb.y1())
-            - (la.y2() - la.y1()) * (la.x1() - lb.x1());
-    var uB  = (lb.y2() - lb.y1()) * (la.x2() - la.x1())
-            - (lb.x2() - lb.x1()) * (la.y2() - la.y1());
-    if(uB) {
-      var ua = uaT / uB;
-      var ub = ubT / uB;
-      if(0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
-        var p = new Point(la.x1() + ua * (la.x2() - la.x1()), la.y1() + ua * (la.y2() - la.y1()));
-        return new Intersection(p, Intersection.POINT);
-      }
-      return new Intersection(null, Intersection.NONE);
-    }
-    return new Intersection(null, (uaT === 0 || ubT === 0) ? Intersection.COINCIDENT : Intersection.PARALLEL);
+  this.list = function() {
+    return arr.filter(function(p) {
+      return p;
+    }).map(function(p) {
+      return p.get();
+    });
   };
-  Intersection.fractionAlongLineA = function(la, lb) {
-    var uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
-            - (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
-    var ubT = (la.x2() - la.x1()) * (la.y1() - lb.y1())
-            - (la.y2() - la.y1()) * (la.x1() - lb.x1());
-    var uB  = (lb.y2() - lb.y1()) * (la.x2() - la.x1())
-            - (lb.x2() - lb.x1()) * (la.y2() - la.y1());
-    if(uB) {
-      var ua = uaT / uB;
-      var ub = ubT / uB;
-      if(0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
-        return ua;
-      }
+  this.clear = function() {
+    for(var i = 0;i < arr.length;i += 1) {
+      arr[i] = null; // nulling is cheaper than deleting or reallocating
     }
-    return Number.POSITIVE_INFINITY;
+    set = {};
+    els = 0;
   };
-  // we can move them out here since there can't be any concurrency
-  var intersectionPline = new Line(0.0, 0.0, 0.0, 0.0);
-  Intersection.fractionToLineCenter = function(bounds, line) {
-    var minDistance = Number.POSITIVE_INFINITY;
-    var countIntersections = 0;
-
-    function testLine(xa, ya, xb, yb) {
-      intersectionPline.x1(xa);
-      intersectionPline.y1(ya);
-      intersectionPline.x2(xb);
-      intersectionPline.y2(yb);
-      var testDistance = Intersection.fractionAlongLineA(line, intersectionPline);
-      testDistance = Math.abs(testDistance - 0.5);
-      if((testDistance >= 0) && (testDistance <= 1)) {
-        countIntersections += 1;
-        if(testDistance < minDistance) {
-          minDistance = testDistance;
-        }
-      }
-    }
-    
-    // top
-    testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
-    // left
-    testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
-    if(countIntersections > 1) return minDistance;
-    // bottom
-    testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
-    if(countIntersections > 1) return minDistance;
-    // right
-    testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
-    // if no intersection, return -1
-    if(countIntersections === 0) return -1;
-    return minDistance;
+  this.get = function(ix) {
+    return arr[ix];
   };
-  Intersection.fractionToLineEnd = function(bounds, line) {
-    var minDistance = Number.POSITIVE_INFINITY;
-    var countIntersections = 0;
-
-    function testLine(xa, ya, xb, yb) {
-      var testDistance = Intersection.fractionAlongLineA(line, new Line(xa, ya, xb, yb));
-      if((testDistance >= 0) && (testDistance <= 1)) {
-        countIntersections += 1;
-        if(testDistance < minDistance) {
-          minDistance = testDistance;
-        }
-      }
-    }
-
-    // top
-    testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
-    // left
-    testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
-    if(countIntersections > 1) return minDistance;
-    // bottom
-    testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
-    if(countIntersections > 1) return minDistance;
-    // right
-    testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
-    // if no intersection, return -1
-    if(countIntersections === 0) return -1;
-    return minDistance;
+  this.size = function() {
+    return els;
   };
-  Intersection.testIntersection = function(line, bounds, intersections) {
-    var countIntersections = 0;
+}; // PointList
 
-    function fillIntersection(ix, xa, ya, xb, yb) {
-      intersections[ix] = Intersection.intersectLineLine(line, new Line(xa, ya, xb, yb));
-      if(intersections[ix].getState() === Intersection.POINT) {
-        countIntersections += 1;
-      }
-    }
+function Line(_x1, _y1, _x2, _y2) {
+  var that = this;
+  var x1 = +_x1;
+  var y1 = +_y1;
+  var x2 = +_x2;
+  var y2 = +_y2;
 
-    // top
-    fillIntersection(0, bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
-    // left
-    fillIntersection(1, bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
-    // bottom
-    fillIntersection(2, bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
-    // right
-    fillIntersection(3, bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
-    return countIntersections;
+  this.rect = function() {
+    var minX = Math.min(x1, x2);
+    var minY = Math.min(y1, y2);
+    var maxX = Math.max(x1, x2);
+    var maxY = Math.max(y1, y2);
+    var res = new Rectangle({
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    });
+    return res;
+  }
+  this.x1 = function(_) {
+    if(!arguments.length) return x1;
+    x1 = _;
   };
-
-  function MarchingSquares(contour, potentialArea, step, t) {
-    var direction = MarchingSquares.S;
-    var threshold = t;
-    var marched = false;
-
-    function updateDir(x, y, dir, res) {
-      var v = potentialArea.get(x, y);
-      if(isNaN(v)) return v;
-      if(v > threshold) return dir + res;
-      return dir;
+  this.x2 = function(_) {
+    if(!arguments.length) return x2;
+    x2 = _;
+  };
+  this.y1 = function(_) {
+    if(!arguments.length) return y1;
+    y1 = _;
+  };
+  this.y2 = function(_) {
+    if(!arguments.length) return y2;
+    y2 = _;
+  };
+  // whether an infinite line to positive x from the point p will cut through the line
+  this.cuts = function(p) {
+    if(y1 === y2) return false;
+    var y = p.y();
+    if((y < y1 && y <= y2) || (y > y1 && y >= y2)) return false;
+    var x = p.x();
+    if(x > x1 && x >= x2) return false;
+    if(x < x1 && x <= x2) return true;
+    var cross = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+    return x <= cross;
+  };
+  this.ptSegDistSq = function(x, y) {
+    return BubbleSet.linePtSegDistSq(x1, y1, x2, y2, x, y);
+  };
+  this.ptClose = function(x, y, r) {
+    // check whether the point is outside the bounding rectangle with padding r
+    if(x1 < x2) {
+      if(x < x1 - r || x > x2 + r) return false;
+    } else {
+      if(x < x2 - r || x > x1 + r) return false;
     }
+    if(y1 < y2) {
+      if(y < y1 - r || y > y2 + r) return false;
+    } else {
+      if(y < y2 - r || y > y1 + r) return false;
+    }
+    return true;
+  };
+}; // Line
 
-    function getState(x, y) {
-      var dir = 0;
-      dir = updateDir(x, y, dir, 1);
-      dir = updateDir(x + 1, y, dir, 2);
-      dir = updateDir(x, y + 1, dir, 4);
-      dir = updateDir(x + 1, y + 1, dir, 8);
-      if(isNaN(dir)) {
-        console.warn("marched out of bounds: " + x + " " + y + " bounds: " + potentialArea.width() + " " + potentialArea.height());
-        return -1;
+function Area(width, height) {
+  var size = width * height;
+  var buff = new Float32Array(size);
+
+  this.bound = function(pos, isX) {
+    if(pos < 0) return 0;
+    return Math.min(pos, (isX ? width : height) - 1);
+  };
+  this.get = function(x, y) {
+    if(x < 0 || x >= width || y < 0 || y >= height) {
+      console.warn("Area.get out of bounds", x, y, width, height);
+      return Number.NaN;
+    }
+    return buff[x + y * width];
+  };
+  this.set = function(x, y, v) {
+    if(x < 0 || x >= width || y < 0 || y >= height) {
+      console.warn("Area.set out of bounds", x, y, width, height);
+      return;
+    }
+    buff[x + y * width] = v;
+  };
+  this.width = function() {
+    return width;
+  };
+  this.height = function() {
+    return height;
+  };
+} // Area
+
+function Intersection(p, s) {
+  var point = p;
+  var state = s;
+
+  this.getState = function() {
+    return state;
+  };
+  this.getPoint = function() {
+    return point;
+  };
+} // Intersection
+Intersection.POINT = 1;
+Intersection.PARALLEL = 2;
+Intersection.COINCIDENT = 3;
+Intersection.NONE = 4;
+Intersection.intersectLineLine = function(la, lb) {
+  var uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
+          - (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
+  var ubT = (la.x2() - la.x1()) * (la.y1() - lb.y1())
+          - (la.y2() - la.y1()) * (la.x1() - lb.x1());
+  var uB  = (lb.y2() - lb.y1()) * (la.x2() - la.x1())
+          - (lb.x2() - lb.x1()) * (la.y2() - la.y1());
+  if(uB) {
+    var ua = uaT / uB;
+    var ub = ubT / uB;
+    if(0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
+      var p = new Point(la.x1() + ua * (la.x2() - la.x1()), la.y1() + ua * (la.y2() - la.y1()));
+      return new Intersection(p, Intersection.POINT);
+    }
+    return new Intersection(null, Intersection.NONE);
+  }
+  return new Intersection(null, (uaT === 0 || ubT === 0) ? Intersection.COINCIDENT : Intersection.PARALLEL);
+};
+Intersection.fractionAlongLineA = function(la, lb) {
+  var uaT = (lb.x2() - lb.x1()) * (la.y1() - lb.y1())
+          - (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
+  var ubT = (la.x2() - la.x1()) * (la.y1() - lb.y1())
+          - (la.y2() - la.y1()) * (la.x1() - lb.x1());
+  var uB  = (lb.y2() - lb.y1()) * (la.x2() - la.x1())
+          - (lb.x2() - lb.x1()) * (la.y2() - la.y1());
+  if(uB) {
+    var ua = uaT / uB;
+    var ub = ubT / uB;
+    if(0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
+      return ua;
+    }
+  }
+  return Number.POSITIVE_INFINITY;
+};
+// we can move them out here since there can't be any concurrency
+var intersectionPline = new Line(0.0, 0.0, 0.0, 0.0);
+Intersection.fractionToLineCenter = function(bounds, line) {
+  var minDistance = Number.POSITIVE_INFINITY;
+  var countIntersections = 0;
+
+  function testLine(xa, ya, xb, yb) {
+    intersectionPline.x1(xa);
+    intersectionPline.y1(ya);
+    intersectionPline.x2(xb);
+    intersectionPline.y2(yb);
+    var testDistance = Intersection.fractionAlongLineA(line, intersectionPline);
+    testDistance = Math.abs(testDistance - 0.5);
+    if((testDistance >= 0) && (testDistance <= 1)) {
+      countIntersections += 1;
+      if(testDistance < minDistance) {
+        minDistance = testDistance;
       }
-      return dir;
     }
+  }
 
-    function doMarch(xpos, ypos) {
-      var x = xpos;
-      var y = ypos;
-      for(;;) { // iterative version of end recursion
-        var p = new Point(x * step, y * step);
-        // check if we're back where we started
-        if(contour.contains(p)) {
-          if(!contour.isFirst(p)) {
-            // encountered a loop but haven't returned to start; will change
-            // direction using conditionals and continue back to start
-          } else {
-            return true;
-          }
+  // top
+  testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
+  // left
+  testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
+  if(countIntersections > 1) return minDistance;
+  // bottom
+  testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
+  if(countIntersections > 1) return minDistance;
+  // right
+  testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
+  // if no intersection, return -1
+  if(countIntersections === 0) return -1;
+  return minDistance;
+};
+Intersection.fractionToLineEnd = function(bounds, line) {
+  var minDistance = Number.POSITIVE_INFINITY;
+  var countIntersections = 0;
+
+  function testLine(xa, ya, xb, yb) {
+    var testDistance = Intersection.fractionAlongLineA(line, new Line(xa, ya, xb, yb));
+    if((testDistance >= 0) && (testDistance <= 1)) {
+      countIntersections += 1;
+      if(testDistance < minDistance) {
+        minDistance = testDistance;
+      }
+    }
+  }
+
+  // top
+  testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
+  // left
+  testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
+  if(countIntersections > 1) return minDistance;
+  // bottom
+  testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
+  if(countIntersections > 1) return minDistance;
+  // right
+  testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
+  // if no intersection, return -1
+  if(countIntersections === 0) return -1;
+  return minDistance;
+};
+Intersection.testIntersection = function(line, bounds, intersections) {
+  var countIntersections = 0;
+
+  function fillIntersection(ix, xa, ya, xb, yb) {
+    intersections[ix] = Intersection.intersectLineLine(line, new Line(xa, ya, xb, yb));
+    if(intersections[ix].getState() === Intersection.POINT) {
+      countIntersections += 1;
+    }
+  }
+
+  // top
+  fillIntersection(0, bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
+  // left
+  fillIntersection(1, bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
+  // bottom
+  fillIntersection(2, bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
+  // right
+  fillIntersection(3, bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
+  return countIntersections;
+};
+
+function MarchingSquares(contour, potentialArea, step, t) {
+  var direction = MarchingSquares.S;
+  var threshold = t;
+  var marched = false;
+
+  function updateDir(x, y, dir, res) {
+    var v = potentialArea.get(x, y);
+    if(isNaN(v)) return v;
+    if(v > threshold) return dir + res;
+    return dir;
+  }
+
+  function getState(x, y) {
+    var dir = 0;
+    dir = updateDir(x, y, dir, 1);
+    dir = updateDir(x + 1, y, dir, 2);
+    dir = updateDir(x, y + 1, dir, 4);
+    dir = updateDir(x + 1, y + 1, dir, 8);
+    if(isNaN(dir)) {
+      console.warn("marched out of bounds: " + x + " " + y + " bounds: " + potentialArea.width() + " " + potentialArea.height());
+      return -1;
+    }
+    return dir;
+  }
+
+  function doMarch(xpos, ypos) {
+    var x = xpos;
+    var y = ypos;
+    for(;;) { // iterative version of end recursion
+      var p = new Point(x * step, y * step);
+      // check if we're back where we started
+      if(contour.contains(p)) {
+        if(!contour.isFirst(p)) {
+          // encountered a loop but haven't returned to start; will change
+          // direction using conditionals and continue back to start
         } else {
-          contour.add(p);
+          return true;
         }
-        var state = getState(x, y);
-        // x, y are upper left of 2X2 marching square
-        switch(state) {
-          case -1:
-            return true; // Marched out of bounds
-          case 0:
-          case 3:
-          case 2:
-          case 7:
-            direction = MarchingSquares.E;
-            break;
-          case 12:
-          case 14:
-          case 4:
-            direction = MarchingSquares.W;
-            break;
-          case 6:
-            direction = (direction === MarchingSquares.N) ? MarchingSquares.W : MarchingSquares.E;
-            break;
-          case 1:
-          case 13:
-          case 5:
-            direction = MarchingSquares.N;
-            break;
-          case 9:
-            direction = (direction === MarchingSquares.E) ? MarchingSquares.N : MarchingSquares.S;
-            break;
-          case 10:
-          case 8:
-          case 11:
-            direction = MarchingSquares.S;
-            break;
-          default:
-            console.warn("Marching squares invalid state: " + state);
-            return true;
-        }
-
-        switch(direction) {
-          case MarchingSquares.N:
-            y -= 1; // up
-            break;
-          case MarchingSquares.S:
-            y += 1; // down
-            break;
-          case MarchingSquares.W:
-            x -= 1; // left
-            break;
-          case MarchingSquares.E:
-            x += 1; // right
-            break;
-          default:
-            console.warn("Marching squares invalid state: " + state);
-            return true;
-        }
+      } else {
+        contour.add(p);
       }
-      console.warn("should not be reachable...");
-      return true;
+      var state = getState(x, y);
+      // x, y are upper left of 2X2 marching square
+      switch(state) {
+        case -1:
+          return true; // Marched out of bounds
+        case 0:
+        case 3:
+        case 2:
+        case 7:
+          direction = MarchingSquares.E;
+          break;
+        case 12:
+        case 14:
+        case 4:
+          direction = MarchingSquares.W;
+          break;
+        case 6:
+          direction = (direction === MarchingSquares.N) ? MarchingSquares.W : MarchingSquares.E;
+          break;
+        case 1:
+        case 13:
+        case 5:
+          direction = MarchingSquares.N;
+          break;
+        case 9:
+          direction = (direction === MarchingSquares.E) ? MarchingSquares.N : MarchingSquares.S;
+          break;
+        case 10:
+        case 8:
+        case 11:
+          direction = MarchingSquares.S;
+          break;
+        default:
+          console.warn("Marching squares invalid state: " + state);
+          return true;
+      }
+
+      switch(direction) {
+        case MarchingSquares.N:
+          y -= 1; // up
+          break;
+        case MarchingSquares.S:
+          y += 1; // down
+          break;
+        case MarchingSquares.W:
+          x -= 1; // left
+          break;
+        case MarchingSquares.E:
+          x += 1; // right
+          break;
+        default:
+          console.warn("Marching squares invalid state: " + state);
+          return true;
+      }
     }
+    console.warn("should not be reachable...");
+    return true;
+  }
 
-    this.march = function() {
-      for(var x = 0;x < potentialArea.width() && !marched;x += 1) {
-        for(var y = 0;y < potentialArea.height() && !marched;y += 1) {
-          if(potentialArea.get(x, y) > threshold && getState(x, y) != 15) {
-            marched = doMarch(x, y);
-          }
+  this.march = function() {
+    for(var x = 0;x < potentialArea.width() && !marched;x += 1) {
+      for(var y = 0;y < potentialArea.height() && !marched;y += 1) {
+        if(potentialArea.get(x, y) > threshold && getState(x, y) != 15) {
+          marched = doMarch(x, y);
         }
       }
-      return marched;
-    };
-  } // MarchingSquares
-  MarchingSquares.N = 0;
-  MarchingSquares.S = 1;
-  MarchingSquares.E = 2;
-  MarchingSquares.W = 3;
+    }
+    return marched;
+  };
+} // MarchingSquares
+MarchingSquares.N = 0;
+MarchingSquares.S = 1;
+MarchingSquares.E = 2;
+MarchingSquares.W = 3;
 
+class BubbleSet {
   var maxRoutingIterations = BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS;
   var maxMarchingIterations = BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS;
   var pixelGroup = BubbleSet.DEFAULT_PIXEL_GROUP;
@@ -688,7 +718,7 @@ function BubbleSet() {
           threshold *= 0.95;
           negativeNodeInfluenceFactor *= 0.8;
           fillPotentialArea(activeRegion, memberItems, nonMembers, potentialArea);
-        }        
+        }
       }
 
       // after half the iterations, start increasing positive energy and lowering the threshold
@@ -980,7 +1010,7 @@ function BubbleSet() {
           var line = linesToCheck.pop();
           // resolve intersections in order along edge
           var closestItem = getCenterItem(nonMembers, line);
-          
+
           if(closestItem) {
             numIntersections = Intersection.testIntersection(line, closestItem, intersections);
             // 2 intersections = line passes through item
@@ -1487,7 +1517,10 @@ PointPath.prototype.toString = function() {
   return outline;
 };
 
-function ShapeSimplifier(_tolerance) {
+class ShapeSimplifier {
+  constructor(_tolerance) {
+
+  }
   var that = this;
   var tolerance = 0.0;
   var tsqr = 0.0;
@@ -1566,7 +1599,7 @@ function ShapeSimplifier(_tolerance) {
   }
 } // ShapeSimplifier
 
-function BSplineShapeGenerator() {
+class BSplineShapeGenerator {
   // since the basic function is fixed this value should not be changed
   var ORDER = 3;
   var START_INDEX = ORDER - 1;

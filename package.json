@@ -1,0 +1,31 @@
+{
+  "name": "bubblesets",
+  "version": "1.0.0",
+  "description": "A JavaScript implementation of Bubble Sets.",
+  "main": "bubblesets.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JosuaKrause/bubblesets-js.git"
+  },
+  "keywords": [
+    "isosurface",
+    "bubbles",
+    "bubblesets",
+    "set",
+    "visualization"
+  ],
+  "author": "Josua Krause",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JosuaKrause/bubblesets-js/issues"
+  },
+  "homepage": "https://github.com/JosuaKrause/bubblesets-js#readme",
+  "devDependencies": {
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint": "^8.52.0"
+  }
+}
