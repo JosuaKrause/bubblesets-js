@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" style="height: 100%; margin: 0;">
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-4DHJEMESJD">
   </script>
@@ -13,9 +16,48 @@
   </script>
   <!-- Google tag end -->
   <title>Bubblesets - Benchmark</title>
-  <meta charset="utf-8">
   <link rel="canonical" href="https://bubblesets-js.josuakrause.com/bench.html">
   <script src="bubblesets.js" charset="utf-8"></script>
+  <style type="text/css">
+    * {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-variant: normal;
+      font-weight: 400;
+      box-sizing: border-box;
+    }
+    
+    @media (hover: none) and (max-width: 480px) {
+      * {
+        font-size: 16px;
+        line-height: 32px;
+        padding: 2px;
+        margin: 2px;
+      }
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .footer-style {
+      padding: 10px;
+      text-align: right;
+      filter: drop-shadow(0 0 4px white) drop-shadow(0 0 4px white)
+        drop-shadow(0 0 4px white) drop-shadow(0 0 4px white);
+      font-weight: 300;
+    }
+
+    .footer-style a {
+      font-weight: 300;
+      pointer-events: fill;
+    }
+  </style>
 </head>
 <body>
 <span onclick="runBench();" style="cursor: pointer; text-decoration: underline;">Run!</span>
@@ -121,6 +163,13 @@ function timerEnd(name) {
   return timers[name + '_avg'];
 }
 </script>
-
+<footer>
+  <div class="footer-style">
+    © jk 2023
+    <a href="https://github.com/JosuaKrause/bubblesets-js" target="_blank">
+      [source]
+    </a>
+  </div>
+</footer>
 </body>
 </html>
