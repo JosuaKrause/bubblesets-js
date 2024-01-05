@@ -1,6 +1,4 @@
 /**
- * Created by Josua Krause on 2014-10-25.
- *
  * Copyright 2024 Josua Krause, Christopher Collins
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Originally created by Josua Krause on 2014-10-25.
  */
 
 export class Rectangle {
