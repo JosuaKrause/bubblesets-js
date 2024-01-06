@@ -1,115 +1,243 @@
 <!DOCTYPE html>
-<html lang="en" style="height: 100%; margin: 0;">
-<head>
-  <title>Bubblesets - Benchmark</title>
-  <meta charset="utf-8">
-  <link rel="canonical" href="https://bubblesets-js.josuakrause.com/bench.html">
-  <script src="bubblesets.js" charset="utf-8"></script>
-</head>
-<body>
-<span onclick="runBench();" style="cursor: pointer; text-decoration: underline;">Run!</span>
-<span id="result"></span>
-<svg style="width: 780px; height: 600px; margin: 0; padding: 0; display: block;">
-  <rect x="0" y="0" width="100%" height="100%" style="stroke: black; stroke-width: 1; fill: none;"></rect>
-  <g id="grects"></g>
-  <path id="path" fill="cornflowerblue" opacity="0.5" stroke="black"></path>
-</svg>
-<script>
-function runBench() {
-  var grects = document.getElementById("grects");
-  var path = document.getElementById("path");
-  var span = document.getElementById("result");
-  span.textContent = "Running!";
-  while(grects.firstChild) {
-    grects.removeChild(grects.firstChild);
-  }
-  var rectanglesA = [];
-  var rectanglesB = [];
-  for(var x = 0;x < 12;x += 1) {
-    for(var y = 0;y < 9;y += 1) {
-      var isA = (x & 1) !== (y & 1);
-      var rects = isA ? rectanglesA : rectanglesB;
-      var coords = {
-        "x": x * 60 + 40,
-        "y": y * 60 + 40,
-        "width": 40,
-        "height": 40,
-      };
-      rects.push(coords);
-      var newRect = grects.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
-      newRect.setAttribute("x", coords["x"]);
-      newRect.setAttribute("y", coords["y"]);
-      newRect.setAttribute("width", coords["width"]);
-      newRect.setAttribute("height", coords["height"]);
-      newRect.setAttribute("fill", isA ? "cornflowerblue" : "crimson");
-      newRect.setAttribute("stroke", "black");
-    }
-  }
-
-  setTimeout(function() {
-    var pad = 5;
-    var bubbles = new BubbleSet();
-
-    function doRun() {
-      var list = bubbles.createOutline(
-        BubbleSet.addPadding(rectanglesA, pad),
-        BubbleSet.addPadding(rectanglesB, pad),
-        null
-      );
-      var outline = new PointPath(list).transform([
-        new ShapeSimplifier(0.0),
-        new BSplineShapeGenerator(),
-        new ShapeSimplifier(0.0),
-      ]);
-      return outline.toString();
-    }
-
-    var runs = 5;
-    var res = null;
-    for(var warm = 0;warm < runs;warm += 1) {
-      var tmp = doRun();
-      if(res && res !== tmp) {
-        console.warn("inconsistent result");
-        return;
+<html lang="en" style="height: 100%; margin: 0">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-4DHJEMESJD"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
       }
-      res = tmp;
-    }
-    var time = null;
-    timer("benchmark");
-    for(var warm = 0;warm < runs;warm += 1) {
-      var finalRes = doRun();
-      if(finalRes !== res) {
-        console.warn("inconsistent end result");
+      gtag('js', new Date());
+
+      gtag('config', 'G-4DHJEMESJD');
+    </script>
+    <!-- Google tag end -->
+    <title>Bubblesets - Benchmark</title>
+    <link
+      rel="canonical"
+      href="https://bubblesets-js.josuakrause.com/bench.html"
+    />
+    <script src="bubblesets.js" charset="utf-8"></script>
+    <style type="text/css">
+      * {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        font-style: normal;
+        font-variant: normal;
+        font-weight: 400;
+        box-sizing: border-box;
       }
-      time = timerEnd("benchmark");
-    }
-    span.textContent = (2*runs) + " runs; " + time + "ms avg. per run";
-    path.setAttribute("d", finalRes);
-  }, 100);
-}
 
-function timeNow() {
-  return window.performance.now();
-}
+      @media (hover: none) and (max-width: 480px) {
+        * {
+          font-size: 16px;
+          line-height: 32px;
+          padding: 2px;
+          margin: 2px;
+        }
 
-var timers = {};
-function timer(name) {
-  timers[name + '_start'] = timeNow();
-  timers[name + '_amount'] = 0;
-  timers[name + '_sum'] = 0;
-  timers[name + '_avg'] = 0;
-}
+        a {
+          font-size: 18px;
+        }
 
-function timerEnd(name) {
-  var now = timeNow();
-  var time = now - timers[name + '_start'];
-  timers[name + '_start'] = now;
-  timers[name + '_amount'] += 1;
-  timers[name + '_sum'] += time;
-  timers[name + '_avg'] = timers[name + '_sum'] / timers[name + '_amount'];
-  return timers[name + '_avg'];
-}
-</script>
+        body {
+          padding: 0;
+          margin: 0;
+        }
+      }
 
-</body>
+      body {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      a,
+      a:visited {
+        color: black;
+      }
+
+      a:hover,
+      a:focus {
+        color: #444;
+      }
+
+      h3 {
+        font-size: 1.25em;
+        font-weight: 500;
+      }
+
+      svg {
+        max-width: 99vw;
+      }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .footer-style {
+        padding: 10px;
+        text-align: right;
+        filter: drop-shadow(0 0 4px white) drop-shadow(0 0 4px white)
+          drop-shadow(0 0 4px white) drop-shadow(0 0 4px white);
+        font-weight: 300;
+      }
+
+      .footer-style a {
+        font-weight: 300;
+        pointer-events: fill;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Benchmark of Bubblesets</h3>
+    <span
+      onclick="runBench();"
+      style="cursor: pointer; text-decoration: underline"
+      >Run!</span
+    >
+    <span id="result"></span>
+    <svg
+      style="
+        width: 780px;
+        height: 600px;
+        margin: 0;
+        padding: 0;
+        display: block;
+      "
+    >
+      <rect
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        style="stroke: black; stroke-width: 1; fill: none"
+      ></rect>
+      <g id="grects"></g>
+      <path
+        id="path"
+        fill="cornflowerblue"
+        opacity="0.5"
+        stroke="black"
+      ></path>
+    </svg>
+    <script>
+      function runBench() {
+        var grects = document.getElementById('grects');
+        var path = document.getElementById('path');
+        var span = document.getElementById('result');
+        span.textContent = 'Running!';
+        while (grects.firstChild) {
+          grects.removeChild(grects.firstChild);
+        }
+        var rectanglesA = [];
+        var rectanglesB = [];
+        for (var x = 0; x < 12; x += 1) {
+          for (var y = 0; y < 9; y += 1) {
+            var isA = (x & 1) !== (y & 1);
+            var rects = isA ? rectanglesA : rectanglesB;
+            var coords = {
+              x: x * 60 + 40,
+              y: y * 60 + 40,
+              width: 40,
+              height: 40,
+            };
+            rects.push(coords);
+            var newRect = grects.appendChild(
+              document.createElementNS('http://www.w3.org/2000/svg', 'rect'),
+            );
+            newRect.setAttribute('x', coords['x']);
+            newRect.setAttribute('y', coords['y']);
+            newRect.setAttribute('width', coords['width']);
+            newRect.setAttribute('height', coords['height']);
+            newRect.setAttribute('fill', isA ? 'cornflowerblue' : 'crimson');
+            newRect.setAttribute('stroke', 'black');
+          }
+        }
+
+        setTimeout(function () {
+          var pad = 5;
+          var bubbles = new BubbleSet();
+
+          function doRun() {
+            var list = bubbles.createOutline(
+              BubbleSet.addPadding(rectanglesA, pad),
+              BubbleSet.addPadding(rectanglesB, pad),
+              null,
+            );
+            var outline = new PointPath(list).transform([
+              new ShapeSimplifier(0.0),
+              new BSplineShapeGenerator(),
+              new ShapeSimplifier(0.0),
+            ]);
+            return outline.toString();
+          }
+
+          var runs = 5;
+          var res = null;
+          for (var warm = 0; warm < runs; warm += 1) {
+            var tmp = doRun();
+            if (res && res !== tmp) {
+              console.warn('inconsistent result');
+              return;
+            }
+            res = tmp;
+          }
+          var time = null;
+          timer('benchmark');
+          for (var warm = 0; warm < runs; warm += 1) {
+            var finalRes = doRun();
+            if (finalRes !== res) {
+              console.warn('inconsistent end result');
+            }
+            time = timerEnd('benchmark');
+          }
+          span.textContent = 2 * runs + ' runs; ' + time + 'ms avg. per run';
+          path.setAttribute('d', finalRes);
+        }, 100);
+      }
+
+      function timeNow() {
+        return window.performance.now();
+      }
+
+      var timers = {};
+      function timer(name) {
+        timers[name + '_start'] = timeNow();
+        timers[name + '_amount'] = 0;
+        timers[name + '_sum'] = 0;
+        timers[name + '_avg'] = 0;
+      }
+
+      function timerEnd(name) {
+        var now = timeNow();
+        var time = now - timers[name + '_start'];
+        timers[name + '_start'] = now;
+        timers[name + '_amount'] += 1;
+        timers[name + '_sum'] += time;
+        timers[name + '_avg'] =
+          timers[name + '_sum'] / timers[name + '_amount'];
+        return timers[name + '_avg'];
+      }
+    </script>
+    <footer>
+      <div class="footer-style">
+        © jk 2023
+        <a href="https://github.com/JosuaKrause/bubblesets-js" target="_blank">
+          [source]
+        </a>
+      </div>
+    </footer>
+  </body>
 </html>
