@@ -20,6 +20,6 @@
     "no-undef": "error",
     "no-extend-native": "off"
   },
-  "plugins": [],
+  "plugins": ["eslint-plugin-html"],
   "ignorePatterns": []
 }

@@ -1,0 +1,77 @@
+* {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 400;
+  box-sizing: border-box;
+}
+
+@media (hover: none) and (max-width: 480px) {
+  * {
+    font-size: 16px;
+    line-height: 32px;
+    padding: 2px;
+    margin: 2px;
+  }
+
+  a {
+    font-size: 18px;
+  }
+
+  body,
+  html {
+    padding: 0;
+    margin: 0;
+  }
+}
+
+body {
+  width: 100vw;
+  height: 90vh;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+h3 {
+  font-size: 1.25em;
+  font-weight: 500;
+}
+
+a,
+a:visited {
+  color: black;
+}
+
+a:hover,
+a:focus {
+  color: #444;
+}
+
+#main {
+  width: 90vw;
+  height: 80vh;
+  margin: 0 auto;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.footer-style {
+  padding: 10px;
+  text-align: right;
+  filter: drop-shadow(0 0 4px white) drop-shadow(0 0 4px white)
+    drop-shadow(0 0 4px white) drop-shadow(0 0 4px white);
+  font-weight: 300;
+}
+
+.footer-style a {
+  font-weight: 300;
+  pointer-events: fill;
+}

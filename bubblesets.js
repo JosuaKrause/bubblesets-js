@@ -29,13 +29,14 @@ export class Rectangle {
   }
 
   rect(r) {
-    if (!arguments.length)
+    if (!arguments.length) {
       return {
-        x: this.x,
-        y: this.y,
-        width: this.width,
-        height: this.height,
+        x: this._x,
+        y: this._y,
+        width: this._width,
+        height: this._height,
       };
+    }
     this._x = +r.x;
     this._y = +r.y;
     this._width = +r.width;
@@ -124,8 +125,8 @@ export class Rectangle {
   }
 
   intersectsLine(line) {
-    const x1 = line.x1();
-    const y1 = line.y1();
+    let x1 = line.x1();
+    let y1 = line.y1();
     const x2 = line.x2();
     const y2 = line.y2();
     // taken from JDK 8 java.awt.geom.Rectangle2D.Double#intersectsLine(double, double, double, double)
@@ -235,7 +236,7 @@ export class PointList {
     this._size = size;
     this._els = 0;
     this._arr = [];
-    this._arr.length = size; // pre-allocating
+    this._arr.length = size; // pre-allocate
     this._set = {};
   }
 
@@ -1195,7 +1196,7 @@ export class BubbleSet {
   }
 
   connectItem(nonMembers, item, visited) {
-    const scannedLines = [];
+    let scannedLines = [];
     const linesToCheck = [];
 
     const itemCenter = new Point(item.centerX(), item.centerY());
@@ -1268,18 +1269,18 @@ export class BubbleSet {
             );
             // 2 intersections = line passes through item
             if (numIntersections === 2) {
-              const tempMorphBuffer = this._morphBuffer;
-              const movePoint = this.rerouteLine(
+              let tempMorphBuffer = this._morphBuffer;
+              let movePoint = this.rerouteLine(
                 closestItem,
                 tempMorphBuffer,
                 intersections,
                 true,
               );
               // test the movePoint already exists
-              const foundFirst =
+              let foundFirst =
                 this.pointExists(movePoint, linesToCheck) ||
                 this.pointExists(movePoint, scannedLines);
-              const pointInside = this.isPointInsideNonMember(
+              let pointInside = this.isPointInsideNonMember(
                 movePoint,
                 nonMembers,
               );
@@ -1324,7 +1325,7 @@ export class BubbleSet {
                   intersections,
                   false,
                 );
-                const foundSecond =
+                let foundSecond =
                   this.pointExists(movePoint, linesToCheck) ||
                   this.pointExists(movePoint, scannedLines);
                 pointInside = this.isPointInsideNonMember(
@@ -1602,8 +1603,9 @@ export class BubbleSet {
   }
 
   calculateRectangleInfluence(potentialArea, influenceFactor, r1, rect) {
-    influenceFactor < 0 &&
+    if (influenceFactor < 0) {
       console.warn('expected positive influence', influenceFactor);
+    }
     // find the affected subregion of potentialArea
     const startX = potentialArea.bound(
       Math.floor(
@@ -1933,9 +1935,9 @@ export class BubbleSet {
     const y1 = ly1;
     const x2 = lx2 - x1;
     const y2 = ly2 - y1;
-    const px = x - x1;
-    const py = y - y1;
-    const dotprod = px * x2 + py * y2;
+    let px = x - x1;
+    let py = y - y1;
+    let dotprod = px * x2 + py * y2;
     let projlenSq;
     if (dotprod <= 0) {
       projlenSq = 0;
