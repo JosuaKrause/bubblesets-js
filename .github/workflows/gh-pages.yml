@@ -1,0 +1,67 @@
+name: Deploy GH-Pages
+
+on:
+  push:
+    branches: ['master']
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      OUTPUT: www
+      LIB_COPY: filelist.txt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Find Files
+        run: |
+          mkdir -p "${{ env.OUTPUT }}" && \
+          find . \
+            -not -path './.*/*' \
+            -not -path './sh/*' \
+            -not -path './${{ env.OUTPUT }}/*' \
+            -type f \
+            -not -name '*.md' \
+            -not -name '*.sh' \
+            -not -name '*.config.js' \
+            -not -name '*.json' \
+            -not -name '${{ env.LIB_COPY }}' \
+            -not -name '.*' \
+            -not -name 'LICENSE' \
+            -not -name 'Makefile' \
+            > '${{ env.LIB_COPY }}'
+
+      - name: Show Files
+        run: |
+          cat '${{ env.LIB_COPY }}'
+
+      - name: Sync Files
+        run: |
+          rsync -atv . '${{ env.OUTPUT }}' --files-from '${{ env.LIB_COPY }}'
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '${{ env.OUTPUT }}'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
