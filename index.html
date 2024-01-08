@@ -90,7 +90,8 @@
         const pathA = appendSVG(main, 'path');
         const pathB = appendSVG(main, 'path');
         const debug = appendSVG(main, 'g');
-        bubbles.debug(true);
+        bubbles.debug(false);
+        // bubbles.debug(true); // FIXME read from somewhere
         const debugFor = pathA;
 
         function update() {

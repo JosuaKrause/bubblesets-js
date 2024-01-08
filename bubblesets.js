@@ -351,7 +351,7 @@ export class Line {
     return this._y1;
   }
 
-  y1(/** @type {number | undefined} */ y2) {
+  y2(/** @type {number | undefined} */ y2) {
     if (y2 !== undefined) {
       this._y2 = y2;
     }
@@ -2190,7 +2190,6 @@ export class PointPath {
     /** @type {number[][]} */ this._arr = [];
     /** @type {boolean} */ this._closed = true;
     if (points) {
-      console.log('add all', points);
       this.addAll(points);
     }
   }
@@ -2249,10 +2248,8 @@ export class PointPath {
 
   transform(/** @type {{apply: (path: PointPath) => PointPath;}[]} */ ts) {
     /** @type {PointPath} */ let path = this;
-    console.log('transform', path);
     ts.forEach((t) => {
       path = t.apply(path);
-      console.log(path, t);
     });
     return path;
   }
@@ -2277,10 +2274,15 @@ export class PointPath {
 } // PointPath
 
 class ShapeSimplifierState {
-  constructor(/** @type {PointPath} */ path, /** @type {number} */ start) {
+  constructor(
+    /** @type {PointPath} */ path,
+    /** @type {number} */ start,
+    /** @type {number} */ tsqr,
+  ) {
     /** @type {PointPath} */ this._path = path;
     /** @type {number} */ this._start = start;
     /** @type {number} */ this._end = start + 1;
+    /** @type {number} */ this._tsqr = tsqr;
   }
 
   advanceEnd() {
@@ -2359,7 +2361,7 @@ export class ShapeSimplifier {
     /** @type {ShapeSimplifierState[]} */ const states = [];
     let start = 0;
     while (start < path.size()) {
-      const s = new ShapeSimplifierState(path, start);
+      const s = new ShapeSimplifierState(path, start, this._tsqr);
       while (s.canTakeNext()) {
         s.advanceEnd();
       }
