@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "allowJs": true,
+    "noEmit": true
+  },
+  "files": ["bubblesets.js"]
+}

@@ -19,7 +19,7 @@
     "visualization"
   ],
   "author": "Josua Krause",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/JosuaKrause/bubblesets-js/issues"
   },
@@ -28,6 +28,7 @@
     "eslint": "^8.52.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-html": "^7.1.0"
+    "eslint-plugin-html": "^7.1.0",
+    "typescript": "^5.3.3"
   }
 }

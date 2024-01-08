@@ -17,30 +17,34 @@
  */
 
 export class Rectangle {
-  constructor(_rect) {
-    this._x = 0;
-    this._y = 0;
-    this._width = 0;
-    this._height = 0;
-    this._centroidDistance = 0;
+  constructor(
+    /** @type {{x: number, y: number, width: number, height: number} | undefined} */ _rect,
+  ) {
+    /** @type {number} */ this._x = 0;
+    /** @type {number} */ this._y = 0;
+    /** @type {number} */ this._width = 0;
+    /** @type {number} */ this._height = 0;
+    /** @type {number} */ this._centroidDistance = 0;
     if (_rect) {
       this.rect(_rect);
     }
   }
 
-  rect(r) {
-    if (!arguments.length) {
-      return {
-        x: this._x,
-        y: this._y,
-        width: this._width,
-        height: this._height,
-      };
+  rect(
+    /** @type {{x: number, y: number, width: number, height: number} | undefined} */ r,
+  ) {
+    if (r !== undefined) {
+      this._x = +r.x;
+      this._y = +r.y;
+      this._width = +r.width;
+      this._height = +r.height;
     }
-    this._x = +r.x;
-    this._y = +r.y;
-    this._width = +r.width;
-    this._height = +r.height;
+    return {
+      x: this._x,
+      y: this._y,
+      width: this._width,
+      height: this._height,
+    };
   }
 
   minX() {
@@ -75,18 +79,24 @@ export class Rectangle {
     return this._height;
   }
 
-  centroidDistance(cd) {
-    if (!arguments.length) return this._centroidDistance;
-    this._centroidDistance = cd;
+  centroidDistance(/** @type {number | undefined} */ cd) {
+    if (cd !== undefined) {
+      this._centroidDistance = cd;
+    }
+    return this._centroidDistance;
   }
 
-  cmp(rect) {
-    if (this._centroidDistance < rect.centroidDistance()) return -1;
-    if (this._centroidDistance > rect.centroidDistance()) return 0;
+  cmp(/** @type {Rectangle} */ rect) {
+    if (this._centroidDistance < rect.centroidDistance()) {
+      return -1;
+    }
+    if (this._centroidDistance > rect.centroidDistance()) {
+      return 0; // FIXME double check if 1 would be better here
+    }
     return 0;
   }
 
-  add(rect) {
+  add(/** @type {Rectangle} */ rect) {
     const tmpx = Math.min(this.minX(), rect.minX());
     const tmpy = Math.min(this.minY(), rect.minY());
     const maxX = Math.max(this.maxX(), rect.maxX());
@@ -97,18 +107,18 @@ export class Rectangle {
     this._height = maxY - this._y;
   }
 
-  contains(p) {
+  contains(/** @type {Point} */ p) {
     const px = p.x();
     const py = p.y();
     return this.containsPt(px, py);
   }
 
-  containsPt(px, py) {
+  containsPt(/** @type {number} */ px, /** @type {number} */ py) {
     if (px < this._x || px >= this._x + this._width) return false;
     return !(py < this._y || py >= this._y + this._height);
   }
 
-  intersects(rect) {
+  intersects(/** @type {Rectangle} */ rect) {
     if (
       this.width() <= 0 ||
       this.height() <= 0 ||
@@ -124,14 +134,14 @@ export class Rectangle {
     );
   }
 
-  intersectsLine(line) {
+  intersectsLine(/** @type {Line} */ line) {
     let x1 = line.x1();
     let y1 = line.y1();
     const x2 = line.x2();
     const y2 = line.y2();
     // taken from JDK 8 java.awt.geom.Rectangle2D.Double#intersectsLine(double, double, double, double)
-    let out1;
-    let out2;
+    /** @type {number} */ let out1;
+    /** @type {number} */ let out2;
     if ((out2 = this.outcode(x2, y2)) === 0) {
       return true;
     }
@@ -158,7 +168,7 @@ export class Rectangle {
     return true;
   }
 
-  outcode(px, py) {
+  outcode(/** @type {number} */ px, /** @type {number} */ py) {
     // taken from JDK 8 java.awt.geom.Rectangle2D.Double#outcode(double, double)
     let out = 0;
     if (this._width <= 0) {
@@ -179,42 +189,36 @@ export class Rectangle {
   }
 
   toString() {
-    return (
-      'Rectangle[x=' +
-      this.minX() +
-      ', y=' +
-      this.minY() +
-      ', w=' +
-      this.width() +
-      ', h=' +
-      this.height() +
-      ']'
-    );
+    return `Rectangle[x=${this.minX()}, y=${this.minY()}, w=${this.width()}, h=${this.height()}]`;
   }
 
-  static OUT_LEFT = 1;
-  static OUT_TOP = 2;
-  static OUT_RIGHT = 4;
-  static OUT_BOTTOM = 8;
+  /** @type {1} */ static OUT_LEFT = 1;
+  /** @type {2} */ static OUT_TOP = 2;
+  /** @type {4} */ static OUT_RIGHT = 4;
+  /** @type {8} */ static OUT_BOTTOM = 8;
 } // Rectangle
 
 export class Point {
-  constructor(ax, ay) {
-    this._x = +ax;
-    this._y = +ay;
+  constructor(/** @type {number} */ ax, /** @type {number} */ ay) {
+    /** @type {number} */ this._x = +ax;
+    /** @type {number} */ this._y = +ay;
   }
 
-  x(_) {
-    if (!arguments.length) return this._x;
-    this._x = _;
+  x(/** @type {number | undefined} */ x) {
+    if (x !== undefined) {
+      this._x = x;
+    }
+    return this._x;
   }
 
-  y(_) {
-    if (!arguments.length) return this._y;
-    this._y = _;
+  y(/** @type {number | undefined} */ y) {
+    if (y !== undefined) {
+      this._y = y;
+    }
+    return this._y;
   }
 
-  distanceSq(p) {
+  distanceSq(/** @type {Point} */ p) {
     return Point.ptsDistanceSq(this._x, this._y, p.x(), p.y());
   }
 
@@ -222,42 +226,58 @@ export class Point {
     return [this._x, this._y];
   }
 
-  static ptsDistanceSq(x1, y1, x2, y2) {
+  static ptsDistanceSq(
+    /** @type {number} */ x1,
+    /** @type {number} */ y1,
+    /** @type {number} */ x2,
+    /** @type {number} */ y2,
+  ) {
     return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
   }
 
-  static doublePointsEqual(x1, y1, x2, y2, delta) {
+  static doublePointsEqual(
+    /** @type {number} */ x1,
+    /** @type {number} */ y1,
+    /** @type {number} */ x2,
+    /** @type {number} */ y2,
+    /** @type {number} */ delta,
+  ) {
     return Point.ptsDistanceSq(x1, y1, x2, y2) < delta * delta;
   }
 } // Point
 
 export class PointList {
-  constructor(size) {
-    this._size = size;
-    this._els = 0;
-    this._arr = [];
+  constructor(/** @type {number} */ size) {
+    /** @type {number} */ this._size = size;
+    /** @type {number} */ this._els = 0;
+    /** @type {(Point | undefined | null)[]} */ this._arr = [];
     this._arr.length = size; // pre-allocate
-    this._set = {};
+    /** @type {{ [key: string]: Point }} */ this._set = {};
   }
 
   static hash(p) {
-    return p.x() + 'x' + p.y();
+    return `${p.x()}x${p.y()}`;
   }
 
-  add(p) {
+  add(/** @type {Point} */ p) {
     this._set[PointList.hash(p)] = p;
+    this._arr[this._els] = 5; // FIXME test
     this._arr[this._els] = p;
     this._els += 1;
   }
 
-  contains(p) {
+  contains(/** @type {Point} */ p) {
     const test = this._set[PointList.hash(p)];
-    if (!test) return false;
+    if (!test) {
+      return false;
+    }
     return test.x() === p.x() && test.y() === p.y();
   }
 
-  isFirst(p) {
-    if (!this._els) return false;
+  isFirst(/** @type {Point} */ p) {
+    if (!this._els) {
+      return false;
+    }
     const test = this._arr[0];
     return test.x() === p.x() && test.y() === p.y();
   }
@@ -274,7 +294,7 @@ export class PointList {
     this._els = 0;
   }
 
-  get(ix) {
+  get(/** @type {number} */ ix) {
     return this._arr[ix];
   }
 
@@ -284,11 +304,16 @@ export class PointList {
 } // PointList
 
 export class Line {
-  constructor(_x1, _y1, _x2, _y2) {
-    this._x1 = +_x1;
-    this._y1 = +_y1;
-    this._x2 = +_x2;
-    this._y2 = +_y2;
+  constructor(
+    /** @type {number} */ x1,
+    /** @type {number} */ y1,
+    /** @type {number} */ x2,
+    /** @type {number} */ y2,
+  ) {
+    /** @type {number} */ this._x1 = +x1;
+    /** @type {number} */ this._y1 = +y1;
+    /** @type {number} */ this._x2 = +x2;
+    /** @type {number} */ this._y2 = +y2;
   }
 
   rect() {
@@ -305,42 +330,57 @@ export class Line {
     return res;
   }
 
-  x1(_) {
-    if (!arguments.length) return this._x1;
-    this._x1 = _;
+  x1(/** @type {number | undefined} */ x1) {
+    if (x1 !== undefined) {
+      this._x1 = x1;
+    }
+    return this._x1;
   }
 
-  x2(_) {
-    if (!arguments.length) return this._x2;
-    this._x2 = _;
+  x2(/** @type {number | undefined} */ x2) {
+    if (x2 !== undefined) {
+      this._x2 = x2;
+    }
+    return this._x2;
   }
 
-  y1(_) {
-    if (!arguments.length) return this._y1;
-    this._y1 = _;
+  y1(/** @type {number | undefined} */ y1) {
+    if (y1 !== undefined) {
+      this._y1 = y1;
+    }
+    return this._y1;
   }
 
-  y2(_) {
-    if (!arguments.length) return this._y2;
-    this._y2 = _;
+  y1(/** @type {number | undefined} */ y2) {
+    if (y2 !== undefined) {
+      this._y2 = y2;
+    }
+    return this._y2;
   }
 
   // whether an infinite line to positive x from the point p will cut through the line
-  cuts(p) {
-    if (this._y1 === this._y2) return false;
-    const y = p.y();
-    if ((y < this._y1 && y <= this._y2) || (y > this._y1 && y >= this._y2))
+  cuts(/** @type {Point} */ p) {
+    if (this._y1 === this._y2) {
       return false;
+    }
+    const y = p.y();
+    if ((y < this._y1 && y <= this._y2) || (y > this._y1 && y >= this._y2)) {
+      return false;
+    }
     const x = p.x();
-    if (x > this._x1 && x >= this._x2) return false;
-    if (x < this._x1 && x <= this._x2) return true;
+    if (x > this._x1 && x >= this._x2) {
+      return false;
+    }
+    if (x < this._x1 && x <= this._x2) {
+      return true;
+    }
     const cross =
       this._x1 +
       ((y - this._y1) * (this._x2 - this._x1)) / (this._y2 - this._y1);
     return x <= cross;
   }
 
-  ptSegDistSq(x, y) {
+  ptSegDistSq(/** @type {number} */ x, /** @type {number} */ y) {
     return BubbleSet.linePtSegDistSq(
       this._x1,
       this._y1,
@@ -351,36 +391,50 @@ export class Line {
     );
   }
 
-  ptClose(x, y, r) {
+  ptClose(
+    /** @type {number} */ x,
+    /** @type {number} */ y,
+    /** @type {number} */ r,
+  ) {
     // check whether the point is outside the bounding rectangle with padding r
     if (this._x1 < this._x2) {
-      if (x < this._x1 - r || x > this._x2 + r) return false;
+      if (x < this._x1 - r || x > this._x2 + r) {
+        return false;
+      }
     } else {
-      if (x < this._x2 - r || x > this._x1 + r) return false;
+      if (x < this._x2 - r || x > this._x1 + r) {
+        return false;
+      }
     }
     if (this._y1 < this._y2) {
-      if (y < this._y1 - r || y > this._y2 + r) return false;
+      if (y < this._y1 - r || y > this._y2 + r) {
+        return false;
+      }
     } else {
-      if (y < this._y2 - r || y > this._y1 + r) return false;
+      if (y < this._y2 - r || y > this._y1 + r) {
+        return false;
+      }
     }
     return true;
   }
 } // Line
 
 export class Area {
-  constructor(width, height) {
-    this._width = width;
-    this._height = height;
-    this._size = width * height;
-    this._buff = new Float32Array(this._size);
+  constructor(/** @type {number} */ width, /** @type {number} */ height) {
+    /** @type {number} */ this._width = width;
+    /** @type {number} */ this._height = height;
+    /** @type {number} */ this._size = width * height;
+    /** @type {Float32Array} */ this._buff = new Float32Array(this._size);
   }
 
-  bound(pos, isX) {
-    if (pos < 0) return 0;
+  bound(/** @type {number} */ pos, /** @type {boolean} */ isX) {
+    if (pos < 0) {
+      return 0;
+    }
     return Math.min(pos, (isX ? this._width : this._height) - 1);
   }
 
-  get(x, y) {
+  get(/** @type {number} */ x, /** @type {number} */ y) {
     if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
       console.warn('Area.get out of bounds', x, y, this._width, this._height);
       return Number.NaN;
@@ -388,7 +442,11 @@ export class Area {
     return this._buff[x + y * this._width];
   }
 
-  set(x, y, v) {
+  set(
+    /** @type {number} */ x,
+    /** @type {number} */ y,
+    /** @type {number} */ v,
+  ) {
     if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
       console.warn('Area.set out of bounds', x, y, this._width, this._height);
       return;
@@ -406,9 +464,9 @@ export class Area {
 } // Area
 
 export class Intersection {
-  constructor(p, s) {
-    this._point = p;
-    this._state = s;
+  constructor(/** @type {Point | null} */ p, /** @type {1 | 2 | 3 | 4} */ s) {
+    /** @type {Point | null} */ this._point = p;
+    /** @type {1 | 2 | 3 | 4} */ this._state = s;
   }
 
   getState() {
@@ -419,12 +477,12 @@ export class Intersection {
     return this._point;
   }
 
-  static POINT = 1;
-  static PARALLEL = 2;
-  static COINCIDENT = 3;
-  static NONE = 4;
+  /** @type {1} */ static POINT = 1;
+  /** @type {2} */ static PARALLEL = 2;
+  /** @type {3} */ static COINCIDENT = 3;
+  /** @type {4} */ static NONE = 4;
 
-  static intersectLineLine(la, lb) {
+  static intersectLineLine(/** @type {Line} */ la, /** @type {Line} */ lb) {
     const uaT =
       (lb.x2() - lb.x1()) * (la.y1() - lb.y1()) -
       (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
@@ -452,7 +510,7 @@ export class Intersection {
     );
   }
 
-  static fractionAlongLineA(la, lb) {
+  static fractionAlongLineA(/** @type {Line} */ la, /** @type {Line} */ lb) {
     const uaT =
       (lb.x2() - lb.x1()) * (la.y1() - lb.y1()) -
       (lb.y2() - lb.y1()) * (la.x1() - lb.x1());
@@ -472,21 +530,22 @@ export class Intersection {
     return Number.POSITIVE_INFINITY;
   }
 
-  // we can move them out here since there can't be any concurrency
-  static INTERSECTION_PLINE = new Line(0.0, 0.0, 0.0, 0.0);
-
-  static fractionToLineCenter(bounds, line) {
+  static fractionToLineCenter(
+    /** @type {Rectangle} */ bounds,
+    /** @type {Line} */ line,
+  ) {
     let minDistance = Number.POSITIVE_INFINITY;
     let countIntersections = 0;
 
-    const testLine = (xa, ya, xb, yb) => {
-      Intersection.INTERSECTION_PLINE.x1(xa);
-      Intersection.INTERSECTION_PLINE.y1(ya);
-      Intersection.INTERSECTION_PLINE.x2(xb);
-      Intersection.INTERSECTION_PLINE.y2(yb);
+    const testLine = (
+      /** @type {number} */ xa,
+      /** @type {number} */ ya,
+      /** @type {number} */ xb,
+      /** @type {number} */ yb,
+    ) => {
       let testDistance = Intersection.fractionAlongLineA(
         line,
-        Intersection.INTERSECTION_PLINE,
+        new Line(xa, ya, xb, yb),
       );
       testDistance = Math.abs(testDistance - 0.5);
       if (testDistance >= 0 && testDistance <= 1) {
@@ -501,22 +560,36 @@ export class Intersection {
     testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
     // left
     testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
-    if (countIntersections > 1) return minDistance;
+    if (countIntersections > 1) {
+      return minDistance;
+    }
     // bottom
     testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
-    if (countIntersections > 1) return minDistance;
+    if (countIntersections > 1) {
+      return minDistance;
+    }
     // right
     testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
     // if no intersection, return -1
-    if (countIntersections === 0) return -1;
+    if (countIntersections === 0) {
+      return -1;
+    }
     return minDistance;
   }
 
-  static fractionToLineEnd(bounds, line) {
+  static fractionToLineEnd(
+    /** @type {Rectangle} */ bounds,
+    /** @type {Line} */ line,
+  ) {
     let minDistance = Number.POSITIVE_INFINITY;
     let countIntersections = 0;
 
-    const testLine = (xa, ya, xb, yb) => {
+    const testLine = (
+      /** @type {number} */ xa,
+      /** @type {number} */ ya,
+      /** @type {number} */ xb,
+      /** @type {number} */ yb,
+    ) => {
       const testDistance = Intersection.fractionAlongLineA(
         line,
         new Line(xa, ya, xb, yb),
@@ -533,21 +606,37 @@ export class Intersection {
     testLine(bounds.minX(), bounds.minY(), bounds.maxX(), bounds.minY());
     // left
     testLine(bounds.minX(), bounds.minY(), bounds.minX(), bounds.maxY());
-    if (countIntersections > 1) return minDistance;
+    if (countIntersections > 1) {
+      return minDistance;
+    }
     // bottom
     testLine(bounds.minX(), bounds.maxY(), bounds.maxX(), bounds.maxY());
-    if (countIntersections > 1) return minDistance;
+    if (countIntersections > 1) {
+      return minDistance;
+    }
     // right
     testLine(bounds.maxX(), bounds.minY(), bounds.maxX(), bounds.maxY());
     // if no intersection, return -1
-    if (countIntersections === 0) return -1;
+    if (countIntersections === 0) {
+      return -1;
+    }
     return minDistance;
   }
 
-  static testIntersection(line, bounds, intersections) {
+  static testIntersection(
+    /** @type {Line} */ line,
+    /** @type {Rectangle} */ bounds,
+    /** @type {Intersection[]} */ intersections,
+  ) {
     let countIntersections = 0;
 
-    const fillIntersection = (ix, xa, ya, xb, yb) => {
+    const fillIntersection = (
+      /** @type {number} */ ix,
+      /** @type {number} */ xa,
+      /** @type {number} */ ya,
+      /** @type {number} */ xb,
+      /** @type {number} */ yb,
+    ) => {
       intersections[ix] = Intersection.intersectLineLine(
         line,
         new Line(xa, ya, xb, yb),
@@ -594,45 +683,52 @@ export class Intersection {
 } // Intersection
 
 export class MarchingSquares {
-  constructor(contour, potentialArea, step, t) {
-    this._contour = contour;
-    this._potentialArea = potentialArea;
-    this._step = step;
-    this._threshold = t;
-    this._direction = MarchingSquares.S;
-    this._marched = false;
+  constructor(
+    /** @type {PointList} */ contour,
+    /** @type {Area} */ potentialArea,
+    /** @type {number} */ step,
+    /** @type {number} */ t,
+  ) {
+    /** @type {PointList} */ this._contour = contour;
+    /** @type {Area} */ this._potentialArea = potentialArea;
+    /** @type {number} */ this._step = step;
+    /** @type {number} */ this._threshold = t;
+    /** @type {0 | 1 | 2 | 3} */ this._direction = MarchingSquares.S;
+    /** @type {boolean} */ this._marched = false;
   }
 
-  updateDir(x, y, dir, res) {
+  updateDir(
+    /** @type {number} */ x,
+    /** @type {number} */ y,
+    /** @type {number} */ dir,
+    /** @type {number} */ res,
+  ) {
     const v = this._potentialArea.get(x, y);
-    if (isNaN(v)) return v;
-    if (v > this._threshold) return dir + res;
+    if (Number.isNaN(v)) {
+      return v;
+    }
+    if (v > this._threshold) {
+      return dir + res;
+    }
     return dir;
   }
 
-  getState(x, y) {
+  getState(/** @type {number} */ x, /** @type {number} */ y) {
     let dir = 0;
     dir = this.updateDir(x, y, dir, 1);
     dir = this.updateDir(x + 1, y, dir, 2);
     dir = this.updateDir(x, y + 1, dir, 4);
     dir = this.updateDir(x + 1, y + 1, dir, 8);
-    if (isNaN(dir)) {
+    if (Number.isNaN(dir)) {
       console.warn(
-        'marched out of bounds: ' +
-          x +
-          ' ' +
-          y +
-          ' bounds: ' +
-          this._potentialArea.width() +
-          ' ' +
-          this._potentialArea.height(),
+        `marched out of bounds: ${x} ${y} bounds: ${this._potentialArea.width()} ${this._potentialArea.height()}`,
       );
       return -1;
     }
     return dir;
   }
 
-  doMarch(xpos, ypos) {
+  doMarch(/** @type {number} */ xpos, /** @type {number} */ ypos) {
     let x = xpos;
     let y = ypos;
     for (;;) {
@@ -706,7 +802,7 @@ export class MarchingSquares {
           x += 1; // right
           break;
         default:
-          console.warn('Marching squares invalid state: ' + state);
+          console.warn(`Marching squares invalid state: ${state}`);
           return true;
       }
     }
@@ -733,83 +829,128 @@ export class MarchingSquares {
     }
     return this._marched;
   }
-  static N = 0;
-  static S = 1;
-  static E = 2;
-  static W = 3;
+  /** @type {0} */ static N = 0;
+  /** @type {1} */ static S = 1;
+  /** @type {2} */ static E = 2;
+  /** @type {3} */ static W = 3;
 } // MarchingSquares
 
 export class BubbleSet {
   constructor() {
-    this._maxRoutingIterations = BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS;
-    this._maxMarchingIterations = BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS;
-    this._pixelGroup = BubbleSet.DEFAULT_PIXEL_GROUP;
-    this._edgeR0 = BubbleSet.DEFAULT_EDGE_R0;
-    this._edgeR1 = BubbleSet.DEFAULT_EDGE_R1;
-    this._nodeR0 = BubbleSet.DEFAULT_NODE_R0;
-    this._nodeR1 = BubbleSet.DEFAULT_NODE_R1;
-    this._morphBuffer = BubbleSet.DEFAULT_MORPH_BUFFER;
-    this._skip = BubbleSet.DEFAULT_SKIP;
+    /** @type {number} */ this._maxRoutingIterations =
+      BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS;
+    /** @type {number} */ this._maxMarchingIterations =
+      BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS;
+    /** @type {number} */ this._pixelGroup = BubbleSet.DEFAULT_PIXEL_GROUP;
+    /** @type {number} */ this._edgeR0 = BubbleSet.DEFAULT_EDGE_R0;
+    /** @type {number} */ this._edgeR1 = BubbleSet.DEFAULT_EDGE_R1;
+    /** @type {number} */ this._nodeR0 = BubbleSet.DEFAULT_NODE_R0;
+    /** @type {number} */ this._nodeR1 = BubbleSet.DEFAULT_NODE_R1;
+    /** @type {number} */ this._morphBuffer = BubbleSet.DEFAULT_MORPH_BUFFER;
+    /** @type {number} */ this._skip = BubbleSet.DEFAULT_SKIP;
 
-    this._threshold = 1;
-    this._nodeInfluenceFactor = 1;
-    this._edgeInfluenceFactor = 1;
-    this._negativeNodeInfluenceFactor = -0.8;
-    this._activeRegion = null;
-    this._virtualEdges = [];
-    this._potentialArea = null;
+    /** @type {number} */ this._threshold = 1;
+    /** @type {number} */ this._nodeInfluenceFactor = 1;
+    /** @type {number} */ this._edgeInfluenceFactor = 1;
+    /** @type {number} */ this._negativeNodeInfluenceFactor = -0.8;
+    /** @type {Rectangle | null} */ this._activeRegion = null;
+    /** @type {Line[]} */ this._virtualEdges = [];
+    /** @type {Area | null} */ this._potentialArea = null;
 
-    this._lastThreshold = Number.NaN;
-    this._debug = false;
+    /** @type {number} */ this._lastThreshold = Number.NaN;
+    /** @type {boolean} */ this._debug = false;
   }
 
-  maxRoutingIterations(_) {
-    if (!arguments.length) return this._maxRoutingIterations;
-    this._maxRoutingIterations = _;
+  maxRoutingIterations(
+    /** @type {number | undefined} */ maxRoutingIterations,
+  ) {
+    if (maxRoutingIterations !== undefined) {
+      this._maxRoutingIterations = maxRoutingIterations;
+    }
+    return this._maxRoutingIterations;
   }
 
-  maxMarchingIterations(_) {
-    if (!arguments.length) return this._maxMarchingIterations;
-    this._maxMarchingIterations = _;
+  maxMarchingIterations(
+    /** @type {number | undefined} */ maxMarchingIterations,
+  ) {
+    if (maxMarchingIterations !== undefined) {
+      this._maxMarchingIterations = maxMarchingIterations;
+    }
+    return this._maxMarchingIterations;
   }
 
-  pixelGroup(_) {
-    if (!arguments.length) return this._pixelGroup;
-    this._pixelGroup = _;
+  pixelGroup(/** @type {number | undefined} */ pixelGroup) {
+    if (pixelGroup !== undefined) {
+      this._pixelGroup = pixelGroup;
+    }
+    return this._pixelGroup;
   }
 
-  edgeR0(_) {
-    if (!arguments.length) return this._edgeR0;
-    this._edgeR0 = _;
+  edgeR0(/** @type {number | undefined} */ edgeR0) {
+    if (edgeR0 !== undefined) {
+      this._edgeR0 = edgeR0;
+    }
+    return this._edgeR0;
   }
 
-  edgeR1(_) {
-    if (!arguments.length) return this._edgeR1;
-    this._edgeR1 = _;
+  edgeR1(/** @type {number | undefined} */ edgeR1) {
+    if (edgeR1 !== undefined) {
+      this._edgeR1 = edgeR1;
+    }
+    return this._edgeR1;
   }
 
-  nodeR0(_) {
-    if (!arguments.length) return this._nodeR0;
-    this._nodeR0 = _;
+  nodeR0(/** @type {number | undefined} */ nodeR0) {
+    if (nodeR0 !== undefined) {
+      this._nodeR0 = nodeR0;
+    }
+    return this._nodeR0;
   }
 
-  nodeR1(_) {
-    if (!arguments.length) return this._nodeR1;
-    this._nodeR1 = _;
+  nodeR1(/** @type {number | undefined} */ nodeR1) {
+    if (nodeR1 !== undefined) {
+      this._nodeR1 = nodeR1;
+    }
+    return this._nodeR1;
   }
 
-  morphBuffer(_) {
-    if (!arguments.length) return this._morphBuffer;
-    this._morphBuffer = _;
+  morphBuffer(/** @type {number | undefined} */ morphBuffer) {
+    if (morphBuffer !== undefined) {
+      this._morphBuffer = morphBuffer;
+    }
+    return this._morphBuffer;
   }
 
-  skip(_) {
-    if (!arguments.length) return this._skip;
-    this._skip = _;
+  skip(/** @type {number | undefined} */ skip) {
+    if (skip !== undefined) {
+      this._skip = skip;
+    }
+    return this._skip;
   }
 
-  createOutline(members, nonmem, edges) {
-    if (!members.length) return [];
+  createOutline(
+    /** @type {{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }[]} */ members,
+    /** @type {{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }[]} */ nonmem,
+    /** @type {{
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+    }[] | undefined} */ edges,
+  ) {
+    if (!members.length) {
+      return [];
+    }
 
     const memberItems = members.map((m) => {
       return new Rectangle(m);
@@ -905,6 +1046,7 @@ export class BubbleSet {
         if (this._negativeNodeInfluenceFactor != 0) {
           this._threshold *= 0.95;
           this._negativeNodeInfluenceFactor *= 0.8;
+          // FIXME check if clearing potential area is required
           this.fillPotentialArea(
             this._activeRegion,
             memberItems,
@@ -969,15 +1111,26 @@ export class BubbleSet {
     return fhull.list();
   }
 
-  debug(_) {
-    if (!arguments.length) return this._debug;
-    this._debug = !!_;
+  debug(/** @type {boolean | undefined} */ debug) {
+    if (debug !== undefined) {
+      this._debug = !!debug;
+    }
+    return this._debug;
   }
 
   // call after createOutline
   debugPotentialArea() {
-    this._debug || console.warn('debug mode should be activated');
-    const rects = [];
+    if (!this._debug) {
+      console.warn('debug mode should be activated');
+    }
+    /** @type {{
+         x: number;
+         y: number;
+         width: number;
+         height: number;
+         value: number;
+         threshold: number;
+     * }[]} */ const rects = [];
     for (let x = 0; x < this._potentialArea.width(); x += 1) {
       for (let y = 0; y < this._potentialArea.height(); y += 1) {
         rects.push({
@@ -993,7 +1146,13 @@ export class BubbleSet {
     return rects;
   }
 
-  calculateContour(contour, bounds, members, nonMembers, potentialArea) {
+  calculateContour(
+    /** @type {PointList} */ contour,
+    /** @type {Rectangle} */ bounds,
+    /** @type {Rectangle[]} */ members,
+    /** @type {Rectangle[]} */ nonMembers,
+    /** @type {Area} */ potentialArea,
+  ) {
     // if no surface could be found stop
     if (
       !new MarchingSquares(
@@ -1002,20 +1161,26 @@ export class BubbleSet {
         this._pixelGroup,
         this._threshold,
       ).march()
-    )
+    ) {
       return false;
+    }
     return this.testContainment(contour, bounds, members, nonMembers)[0];
   }
 
-  testContainment(contour, bounds, members, nonMembers) {
+  testContainment(
+    /** @type {PointList} */ contour,
+    /** @type {Rectangle} */ bounds,
+    /** @type {Rectangle[]} */ members,
+    /** @type {Rectangle[]} */ nonMembers,
+  ) {
     // precise bounds checking
     // copy hull values
-    const g = [];
-    let gbounds = null;
+    /** @type {Point[]} */ const g = [];
+    /** @type {Rectangle} */ let gbounds = null;
 
-    const contains = (g, p) => {
-      let line = null;
-      let first = null;
+    const contains = (/** @type {Point[]} */ g, /** @type {Point} */ p) => {
+      /** @type {Line | null} */ let line = null;
+      /** @type {Point | null} */ let first = null;
       let crossings = 0;
       g.forEach((cur) => {
         if (!line) {
@@ -1102,7 +1267,12 @@ export class BubbleSet {
     return [containsAll, containsExtra];
   }
 
-  fillPotentialArea(activeArea, members, nonMembers, potentialArea) {
+  fillPotentialArea(
+    /** @type {Rectangle} */ activeArea,
+    /** @type {Rectangle[]} */ members,
+    /** @type {Rectangle[]} */ nonMembers,
+    /** @type {Area} */ potentialArea,
+  ) {
     let influenceFactor = 0;
     // add all positive energy (included items) first, as negative energy
     // (morphing) requires all positives to be already set
@@ -1143,6 +1313,7 @@ export class BubbleSet {
     if (this._negativeNodeInfluenceFactor) {
       nonMembers.forEach((item) => {
         // if item is within influence bounds, add potential
+        // FIXME check intersection with node radii
         if (activeArea.intersects(item)) {
           // subtract influence
           influenceFactor = this._negativeNodeInfluenceFactor;
@@ -1160,7 +1331,7 @@ export class BubbleSet {
     }
   }
 
-  calculateCentroidDistances(items) {
+  calculateCentroidDistances(/** @type {Rectangle[]} */ items) {
     let totalx = 0;
     let totaly = 0;
     let nodeCount = 0;
@@ -1178,8 +1349,11 @@ export class BubbleSet {
     });
   }
 
-  calculateVirtualEdges(items, nonMembers) {
-    const visited = [];
+  calculateVirtualEdges(
+    /** @type {Rectangle[]} */ items,
+    /** @type {Rectangle[]} */ nonMembers,
+  ) {
+    /** @type {Rectangle[]} */ const visited = [];
     this._virtualEdges = [];
     this.calculateCentroidDistances(items);
     items.sort((a, b) => {
@@ -1195,12 +1369,16 @@ export class BubbleSet {
     });
   }
 
-  connectItem(nonMembers, item, visited) {
-    let scannedLines = [];
-    const linesToCheck = [];
+  connectItem(
+    /** @type {Rectangle[]} */ nonMembers,
+    /** @type {Rectangle} */ item,
+    /** @type {Rectangle[]} */ visited,
+  ) {
+    /** @type {Line[]} */ let scannedLines = [];
+    /** @type {Line[]} */ const linesToCheck = [];
 
     const itemCenter = new Point(item.centerX(), item.centerY());
-    let closestNeighbour = null;
+    /** @type {Rectangle | null} */ let closestNeighbour = null;
     let minLengthSq = Number.POSITIVE_INFINITY;
     // discover the nearest neighbour with minimal interference items
     visited.forEach((neighbourItem) => {
@@ -1251,7 +1429,7 @@ export class BubbleSet {
 
       let hasIntersection = true;
       let iterations = 0;
-      const intersections = [];
+      /** @type {Intersection[]} */ const intersections = [];
       intersections.length = 4;
       let numIntersections = 0;
       while (hasIntersection && iterations < this._maxRoutingIterations) {
@@ -1419,16 +1597,22 @@ export class BubbleSet {
     return scannedLines;
   }
 
-  isPointInsideNonMember(point, nonMembers) {
+  isPointInsideNonMember(
+    /** @type {Point} */ point,
+    /** @type {Rectangle[]} */ nonMembers,
+  ) {
     return nonMembers.some((testRectangle) => {
       return testRectangle.contains(point);
     });
   }
 
-  pointExists(pointToCheck, lines) {
+  pointExists(/** @type {Point} */ pointToCheck, /** @type {Line[]} */ lines) {
     let found = false;
     lines.forEach((checkEndPointsLine) => {
-      if (found) return;
+      // FIXME use short-circuit operation
+      if (found) {
+        return;
+      }
       if (
         Point.doublePointsEqual(
           checkEndPointsLine.x1(),
@@ -1455,9 +1639,12 @@ export class BubbleSet {
     return found;
   }
 
-  getCenterItem(items, testLine) {
+  getCenterItem(
+    /** @type {Rectangle[]} */ items,
+    /** @type {Line} */ testLine,
+  ) {
     let minDistance = Number.POSITIVE_INFINITY;
-    let closestItem = null;
+    /** @type {Rectangle | null} */ let closestItem = null;
 
     items.forEach((interferenceItem) => {
       if (interferenceItem.intersectsLine(testLine)) {
@@ -1475,7 +1662,10 @@ export class BubbleSet {
     return closestItem;
   }
 
-  countInterferenceItems(interferenceItems, testLine) {
+  countInterferenceItems(
+    /** @type {Rectangle[]} */ interferenceItems,
+    /** @type {Line} */ testLine,
+  ) {
     return interferenceItems.reduce((count, interferenceItem) => {
       if (interferenceItem.intersectsLine(testLine)) {
         if (
@@ -1489,11 +1679,11 @@ export class BubbleSet {
   }
 
   calculateLinesInfluence(
-    potentialArea,
-    influenceFactor,
-    r1,
-    lines,
-    activeRegion,
+    /** @type {Area} */ potentialArea,
+    /** @type {number} */ influenceFactor,
+    /** @type {number} */ r1,
+    /** @type {Line[]} */ lines,
+    /** @type {Rectangle} */ activeRegion,
   ) {
     lines.forEach((line) => {
       const lr = line.rect();
@@ -1541,7 +1731,11 @@ export class BubbleSet {
     });
   }
 
-  getRectDistSq(rect, tempX, tempY) {
+  getRectDistSq(
+    /** @type {Rectangle} */ rect,
+    /** @type {number} */ tempX,
+    /** @type {number} */ tempY,
+  ) {
     // test current point to see if it is inside rectangle
     if (!rect.containsPt(tempX, tempY)) {
       // which edge of rectangle is closest
@@ -1602,7 +1796,12 @@ export class BubbleSet {
     return 0;
   }
 
-  calculateRectangleInfluence(potentialArea, influenceFactor, r1, rect) {
+  calculateRectangleInfluence(
+    /** @type {Area} */ potentialArea,
+    /** @type {number} */ influenceFactor,
+    /** @type {number} */ r1,
+    /** @type {Rectangle} */ rect,
+  ) {
     if (influenceFactor < 0) {
       console.warn('expected positive influence', influenceFactor);
     }
@@ -1653,13 +1852,14 @@ export class BubbleSet {
   }
 
   calculateRectangleNegativeInfluence(
-    potentialArea,
-    influenceFactor,
-    r1,
-    rect,
+    /** @type {Area} */ potentialArea,
+    /** @type {number} */ influenceFactor,
+    /** @type {number} */ r1,
+    /** @type {Rectangle} */ rect,
   ) {
-    influenceFactor > 0 &&
+    if (influenceFactor > 0) {
       console.warn('expected negative influence', influenceFactor);
+    }
     // find the affected subregion of potentialArea
     const startX = potentialArea.bound(
       Math.floor(
@@ -1711,7 +1911,12 @@ export class BubbleSet {
     }
   }
 
-  rerouteLine(rectangle, rerouteBuffer, intersections, wrapNormal) {
+  rerouteLine(
+    /** @type {Rectangle} */ rectangle,
+    /** @type {number} */ rerouteBuffer,
+    /** @type {Intersection[]} */ intersections,
+    /** @type {boolean} */ wrapNormal,
+  ) {
     const topIntersect = intersections[0];
     const leftIntersect = intersections[1];
     const bottomIntersect = intersections[2];
@@ -1929,7 +2134,14 @@ export class BubbleSet {
   static DEFAULT_MORPH_BUFFER = BubbleSet.DEFAULT_NODE_R0; // the amount of space to move the virtual edge when wrapping around obstacles
   static DEFAULT_SKIP = 8; // the default number of contour steps to skip when building the contour (higher is less precise but faster)
 
-  static linePtSegDistSq(lx1, ly1, lx2, ly2, x, y) {
+  static linePtSegDistSq(
+    /** @type {number} */ lx1,
+    /** @type {number} */ ly1,
+    /** @type {number} */ lx2,
+    /** @type {number} */ ly2,
+    /** @type {number} */ x,
+    /** @type {number} */ y,
+  ) {
     // taken from JDK 8 java.awt.geom.Line2D#ptSegDistSq(double, double, double, double, double, double)
     const x1 = lx1;
     const y1 = ly1;
@@ -1938,7 +2150,7 @@ export class BubbleSet {
     let px = x - x1;
     let py = y - y1;
     let dotprod = px * x2 + py * y2;
-    let projlenSq;
+    /** @type {number} */ let projlenSq;
     if (dotprod <= 0) {
       projlenSq = 0;
     } else {
@@ -1958,7 +2170,10 @@ export class BubbleSet {
     return lenSq;
   }
 
-  static addPadding(rects, radius) {
+  static addPadding(
+    /** @type {{x: number; y: number; width: number; height: number;}[]} */ rects,
+    /** @type {number} */ radius,
+  ) {
     return rects.map((r) => {
       return {
         x: r['x'] - radius,
@@ -1971,26 +2186,29 @@ export class BubbleSet {
 } // BubbleSet
 
 export class PointPath {
-  constructor(points) {
-    this._arr = [];
-    this._closed = true;
-    if (arguments.length && points) {
+  constructor(/** @type {number[][] | undefined} */ points) {
+    /** @type {number[][]} */ this._arr = [];
+    /** @type {boolean} */ this._closed = true;
+    if (points) {
+      console.log('add all', points);
       this.addAll(points);
     }
   }
 
-  closed(_) {
-    if (!arguments.length) return this._closed;
-    this._closed = _;
+  closed(/** @type {boolean | undefined} */ closed) {
+    if (closed !== undefined) {
+      this._closed = closed;
+    }
+    return this._closed;
   }
 
-  addAll(points) {
+  addAll(/** @type {number[][]} */ points) {
     points.forEach((p) => {
       this.add(p);
     });
   }
 
-  add(p) {
+  add(/** @type {number[]} */ p) {
     const x = p[0];
     const y = p[1];
     if (Number.isNaN(x) || Number.isNaN(y)) {
@@ -2003,19 +2221,23 @@ export class PointPath {
     return this._arr.length;
   }
 
-  get(ix) {
+  get(/** @type {number} */ ix) {
     const size = this.size();
     const closed = this.closed();
+    /** @type {number[]} */ let res;
     if (ix < 0) {
-      return closed ? this.get(ix + size) : this.get(0);
+      res = closed ? this.get(ix + size) : this.get(0);
+    } else if (ix >= size) {
+      res = closed ? this.get(ix - size) : this.get(size - 1);
+    } else {
+      res = this._arr[ix];
     }
-    if (ix >= size) {
-      return closed ? this.get(ix - size) : this.get(size - 1);
-    }
-    return this._arr[ix];
+    return res;
   }
 
-  forEach(cb) {
+  forEach(
+    /** @type {(el: number[], ix: number, that: PointPath) => void} */ cb,
+  ) {
     this._arr.forEach((el, ix) => {
       cb(el, ix, this);
     });
@@ -2025,20 +2247,23 @@ export class PointPath {
     return !this.size();
   }
 
-  transform(ts) {
-    let path = this;
+  transform(/** @type {{apply: (path: PointPath) => PointPath;}[]} */ ts) {
+    /** @type {PointPath} */ let path = this;
+    console.log('transform', path);
     ts.forEach((t) => {
       path = t.apply(path);
+      console.log(path, t);
     });
     return path;
   }
+
   toString() {
     let outline = '';
     this.forEach((p) => {
       if (!outline.length) {
-        outline += 'M' + p[0] + ' ' + p[1];
+        outline += `M${p[0]} ${p[1]}`;
       } else {
-        outline += ' L' + p[0] + ' ' + p[1];
+        outline += ` L${p[0]} ${p[1]}`;
       }
     });
     if (!outline.length) {
@@ -2052,10 +2277,10 @@ export class PointPath {
 } // PointPath
 
 class ShapeSimplifierState {
-  constructor(path, start) {
-    this._path = path;
-    this._start = start;
-    this._end = start + 1;
+  constructor(/** @type {PointPath} */ path, /** @type {number} */ start) {
+    /** @type {PointPath} */ this._path = path;
+    /** @type {number} */ this._start = start;
+    /** @type {number} */ this._end = start + 1;
   }
 
   advanceEnd() {
@@ -2084,7 +2309,7 @@ class ShapeSimplifierState {
     return this._path.get(this._start);
   }
 
-  lineDstSqr(ix) {
+  lineDstSqr(/** @type {number} */ ix) {
     const p = this._path.get(ix);
     const s = this.startPoint();
     const e = this.endPoint();
@@ -2092,7 +2317,9 @@ class ShapeSimplifierState {
   }
 
   canTakeNext() {
-    if (!this.validEnd()) return false;
+    if (!this.validEnd()) {
+      return false;
+    }
     let ok = true;
     this.advanceEnd();
     for (let ix = this._start + 1; ix < this._end; ix += 1) {
@@ -2107,25 +2334,29 @@ class ShapeSimplifierState {
 } // ShapeSimplifierState
 
 export class ShapeSimplifier {
-  constructor(tolerance) {
-    this._tolerance = 0.0;
-    this._tsqr = 0.0;
+  constructor(/** @type {number} */ tolerance) {
+    /** @type {number} */ this._tolerance = 0.0;
+    /** @type {number} */ this._tsqr = 0.0;
     this.tolerance(tolerance);
   }
 
-  tolerance(_) {
-    if (!arguments.length) return this._tolerance;
-    this._tolerance = _;
-    this._tsqr = this._tolerance * this._tolerance;
+  tolerance(/** @type {number | undefined} */ tolerance) {
+    if (tolerance !== undefined) {
+      this._tolerance = tolerance;
+      this._tsqr = this._tolerance * this._tolerance;
+    }
+    return this._tolerance;
   }
 
   isDisabled() {
     return this._tolerance < 0.0;
   }
 
-  apply(path) {
-    if (this.isDisabled() || path.size() < 3) return path;
-    const states = [];
+  apply(/** @type {PointPath} */ path) {
+    if (this.isDisabled() || path.size() < 3) {
+      return path;
+    }
+    /** @type {ShapeSimplifierState[]} */ const states = [];
     let start = 0;
     while (start < path.size()) {
       const s = new ShapeSimplifierState(path, start);
@@ -2152,16 +2383,18 @@ export class BSplineShapeGenerator {
     BSplineShapeGenerator.REL_END - BSplineShapeGenerator.ORDER;
 
   constructor() {
-    this._clockwise = true;
-    this._granularity = 6.0;
+    /** @type {boolean} */ this._clockwise = true;
+    /** @type {number} */ this._granularity = 6.0;
   }
 
-  granularity(_) {
-    if (!arguments.length) return this._granularity;
-    this._granularity = _;
+  granularity(/** @type {number | undefined} */ granularity) {
+    if (granularity !== undefined) {
+      this._granularity = granularity;
+    }
+    return this._granularity;
   }
 
-  baseFunction(i, t) {
+  baseFunction(/** @type {number} */ i, /** @type {number} */ t) {
     // the basis function for a cubic B spline
     switch (i) {
       case -2:
@@ -2177,11 +2410,18 @@ export class BSplineShapeGenerator {
     }
   }
 
-  getRelativeIndex(index, relIndex) {
+  getRelativeIndex(
+    /** @type {number} */ index,
+    /** @type {number} */ relIndex,
+  ) {
     return index + (this._clockwise ? relIndex : -relIndex);
   }
 
-  calcPoint(path, i, t) {
+  calcPoint(
+    /** @type {PointPath} */ path,
+    /** @type {number} */ i,
+    /** @type {number} */ t,
+  ) {
     // evaluates a point on the B spline
     let px = 0.0;
     let py = 0.0;
@@ -2198,9 +2438,11 @@ export class BSplineShapeGenerator {
     return [px, py];
   }
 
-  apply(path) {
+  apply(/** @type {PointPath} */ path) {
     // covering special cases
-    if (path.size() < 3) return path;
+    if (path.size() < 3) {
+      return path;
+    }
     // actual b-spline calculation
     const res = new PointPath();
     const count = path.size() + BSplineShapeGenerator.ORDER - 1;
