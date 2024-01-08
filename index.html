@@ -39,7 +39,7 @@
       ></rect>
     </svg>
 
-    <script type="module" id="jsmain" defer>
+    <script type="module" id="jsmain">
       import {
         BubbleSet,
         PointPath,
@@ -191,7 +191,11 @@
         });
       }
 
-      start();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+      } else {
+        start();
+      }
     </script>
     <footer>
       <div class="footer-style">
