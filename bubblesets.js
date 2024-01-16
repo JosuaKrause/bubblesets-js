@@ -15,6 +15,7 @@
  *
  * Originally created by Josua Krause on 2014-10-25.
  */
+// @ts-check
 
 export class Rectangle {
   constructor(
@@ -255,13 +256,12 @@ export class PointList {
     /** @type {{ [key: string]: Point }} */ this._set = {};
   }
 
-  static hash(p) {
+  static hash(/** @type {Point} */ p) {
     return `${p.x()}x${p.y()}`;
   }
 
   add(/** @type {Point} */ p) {
     this._set[PointList.hash(p)] = p;
-    this._arr[this._els] = 5; // FIXME test
     this._arr[this._els] = p;
     this._els += 1;
   }

@@ -3,7 +3,8 @@
     "module": "commonjs",
     "noImplicitAny": true,
     "allowJs": true,
-    "noEmit": true
+    "noEmit": true,
+    "lib": ["ES2016", "DOM"]
   },
-  "files": ["bubblesets.js"]
+  "files": ["bubblesets.js", "index.js"]
 }
