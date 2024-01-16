@@ -4,7 +4,7 @@
     "noImplicitAny": true,
     "allowJs": true,
     "noEmit": true,
-    "lib": ["ES2016", "DOM"]
+    "lib": ["ES2023", "DOM"]
   },
   "files": ["bubblesets.js", "index.js"]
 }

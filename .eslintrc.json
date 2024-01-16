@@ -12,13 +12,9 @@
     "ecmaVersion": "latest"
   },
   "rules": {
-    "camelcase": "off",
-    "max-len": "off",
     "require-jsdoc": "off",
     "no-implicit-globals": "error",
-    "no-invalid-this": "off",
-    "no-undef": "error",
-    "no-extend-native": "off"
+    "no-undef": "error"
   },
   "plugins": ["eslint-plugin-html"],
   "ignorePatterns": []

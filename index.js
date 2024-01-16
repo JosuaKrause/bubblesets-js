@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 // @ts-check
+
+/** @typedef {{x: number, y: number, width: number, height: number, elem: SVGElement}} SVGRectObj */
+
 import {
   BSplineShapeGenerator,
   BubbleSet,
@@ -66,9 +69,9 @@ function removeAllChilds(/** @type {SVGElement} */ parent) {
 
 function start() {
   const bubbles = new BubbleSet();
-  /** @type {{ x: number, y: number, width: number, height: number, elem: SVGElement }[]} */
+  /** @type {SVGRectObj[]} */
   const rectanglesA = [];
-  /** @type {{ x: number, y: number, width: number, height: number, elem: SVGElement }[]} */
+  /** @type {SVGRectObj[]} */
   const rectanglesB = [];
   const main = document.getElementById('main');
   const items = appendSVG(main, 'g');
@@ -85,8 +88,8 @@ function start() {
   }
 
   function updateOutline(
-    /** @type {{ x: number, y: number, width: number, height: number }[]} */ rectangles,
-    /** @type {{ x: number, y: number, width: number, height: number }[]} */ otherRectangles,
+    /** @type {SVGRectObj[]} */ rectangles,
+    /** @type {SVGRectObj[]} */ otherRectangles,
     /** @type {string} */ color,
     /** @type {SVGElement} */ path,
   ) {
@@ -139,7 +142,7 @@ function start() {
   }
 
   function addRect(
-    /** @type {{ x: number, y: number, width: number, height: number, elem: SVGElement }[]} */ rectangles,
+    /** @type {SVGRectObj[]} */ rectangles,
     /** @type {string} */ color,
     /** @type {number} */ cx,
     /** @type {number} */ cy,

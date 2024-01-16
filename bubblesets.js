@@ -17,23 +17,28 @@
  */
 // @ts-check
 
+/** @typedef {{x: number, y: number, width: number, height: number}} RectObj */
+/** @typedef {{x1: number, y1: number, x2: number, y2: number}} LineObj */
+/** @typedef {{x: number, y: number, width: number, height: number, value: number, threshold: number}} DebugRectObj */
+
 export class Rectangle {
-  constructor(
-    /** @type {{x: number, y: number, width: number, height: number} | undefined} */ _rect,
-  ) {
-    /** @type {number} */ this._x = 0;
-    /** @type {number} */ this._y = 0;
-    /** @type {number} */ this._width = 0;
-    /** @type {number} */ this._height = 0;
-    /** @type {number} */ this._centroidDistance = 0;
+  constructor(/** @type {RectObj | undefined} */ _rect) {
+    /** @type {number} */
+    this._x = 0;
+    /** @type {number} */
+    this._y = 0;
+    /** @type {number} */
+    this._width = 0;
+    /** @type {number} */
+    this._height = 0;
+    /** @type {number} */
+    this._centroidDistance = 0;
     if (_rect) {
       this.rect(_rect);
     }
   }
 
-  rect(
-    /** @type {{x: number, y: number, width: number, height: number} | undefined} */ r,
-  ) {
+  rect(/** @type {RectObj | undefined} */ r) {
     if (r !== undefined) {
       this._x = +r.x;
       this._y = +r.y;
@@ -141,8 +146,10 @@ export class Rectangle {
     const x2 = line.x2();
     const y2 = line.y2();
     // taken from JDK 8 java.awt.geom.Rectangle2D.Double#intersectsLine(double, double, double, double)
-    /** @type {number} */ let out1;
-    /** @type {number} */ let out2;
+    /** @type {number} */
+    let out1;
+    /** @type {number} */
+    let out2;
     if ((out2 = this.outcode(x2, y2)) === 0) {
       return true;
     }
@@ -193,10 +200,14 @@ export class Rectangle {
     return `Rectangle[x=${this.minX()}, y=${this.minY()}, w=${this.width()}, h=${this.height()}]`;
   }
 
-  /** @type {1} */ static OUT_LEFT = 1;
-  /** @type {2} */ static OUT_TOP = 2;
-  /** @type {4} */ static OUT_RIGHT = 4;
-  /** @type {8} */ static OUT_BOTTOM = 8;
+  /** @type {1} */
+  static OUT_LEFT = 1;
+  /** @type {2} */
+  static OUT_TOP = 2;
+  /** @type {4} */
+  static OUT_RIGHT = 4;
+  /** @type {8} */
+  static OUT_BOTTOM = 8;
 } // Rectangle
 
 export class Point {
@@ -249,11 +260,15 @@ export class Point {
 
 export class PointList {
   constructor(/** @type {number} */ size) {
-    /** @type {number} */ this._size = size;
-    /** @type {number} */ this._els = 0;
-    /** @type {(Point | undefined | null)[]} */ this._arr = [];
+    /** @type {number} */
+    this._size = size;
+    /** @type {number} */
+    this._els = 0;
+    /** @type {(Point | undefined | null)[]} */
+    this._arr = [];
     this._arr.length = size; // pre-allocate
-    /** @type {{ [key: string]: Point }} */ this._set = {};
+    /** @type {{ [key: string]: Point }} */
+    this._set = {};
   }
 
   static hash(/** @type {Point} */ p) {
@@ -421,10 +436,14 @@ export class Line {
 
 export class Area {
   constructor(/** @type {number} */ width, /** @type {number} */ height) {
-    /** @type {number} */ this._width = width;
-    /** @type {number} */ this._height = height;
-    /** @type {number} */ this._size = width * height;
-    /** @type {Float32Array} */ this._buff = new Float32Array(this._size);
+    /** @type {number} */
+    this._width = width;
+    /** @type {number} */
+    this._height = height;
+    /** @type {number} */
+    this._size = width * height;
+    /** @type {Float32Array} */
+    this._buff = new Float32Array(this._size);
   }
 
   bound(/** @type {number} */ pos, /** @type {boolean} */ isX) {
@@ -463,10 +482,17 @@ export class Area {
   }
 } // Area
 
+/** @typedef {1 | 2 | 3 | 4} IntersectionType */
+
 export class Intersection {
-  constructor(/** @type {Point | null} */ p, /** @type {1 | 2 | 3 | 4} */ s) {
-    /** @type {Point | null} */ this._point = p;
-    /** @type {1 | 2 | 3 | 4} */ this._state = s;
+  constructor(
+    /** @type {Point | null} */ p,
+    /** @type {IntersectionType} */ s,
+  ) {
+    /** @type {Point | null} */
+    this._point = p;
+    /** @type {IntersectionType} */
+    this._state = s;
   }
 
   getState() {
@@ -477,10 +503,14 @@ export class Intersection {
     return this._point;
   }
 
-  /** @type {1} */ static POINT = 1;
-  /** @type {2} */ static PARALLEL = 2;
-  /** @type {3} */ static COINCIDENT = 3;
-  /** @type {4} */ static NONE = 4;
+  /** @type {IntersectionType} */
+  static POINT = 1;
+  /** @type {IntersectionType} */
+  static PARALLEL = 2;
+  /** @type {IntersectionType} */
+  static COINCIDENT = 3;
+  /** @type {IntersectionType} */
+  static NONE = 4;
 
   static intersectLineLine(/** @type {Line} */ la, /** @type {Line} */ lb) {
     const uaT =
@@ -682,6 +712,8 @@ export class Intersection {
   }
 } // Intersection
 
+/** @typedef {0 | 1 | 2 | 3} MarchingDirection */
+
 export class MarchingSquares {
   constructor(
     /** @type {PointList} */ contour,
@@ -689,12 +721,18 @@ export class MarchingSquares {
     /** @type {number} */ step,
     /** @type {number} */ t,
   ) {
-    /** @type {PointList} */ this._contour = contour;
-    /** @type {Area} */ this._potentialArea = potentialArea;
-    /** @type {number} */ this._step = step;
-    /** @type {number} */ this._threshold = t;
-    /** @type {0 | 1 | 2 | 3} */ this._direction = MarchingSquares.S;
-    /** @type {boolean} */ this._marched = false;
+    /** @type {PointList} */
+    this._contour = contour;
+    /** @type {Area} */
+    this._potentialArea = potentialArea;
+    /** @type {number} */
+    this._step = step;
+    /** @type {number} */
+    this._threshold = t;
+    /** @type {MarchingDirection} */
+    this._direction = MarchingSquares.S;
+    /** @type {boolean} */
+    this._marched = false;
   }
 
   updateDir(
@@ -829,36 +867,56 @@ export class MarchingSquares {
     }
     return this._marched;
   }
-  /** @type {0} */ static N = 0;
-  /** @type {1} */ static S = 1;
-  /** @type {2} */ static E = 2;
-  /** @type {3} */ static W = 3;
+  /** @type {MarchingDirection} */
+  static N = 0;
+  /** @type {MarchingDirection} */
+  static S = 1;
+  /** @type {MarchingDirection} */
+  static E = 2;
+  /** @type {MarchingDirection} */
+  static W = 3;
 } // MarchingSquares
 
 export class BubbleSet {
   constructor() {
-    /** @type {number} */ this._maxRoutingIterations =
-      BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS;
-    /** @type {number} */ this._maxMarchingIterations =
-      BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS;
-    /** @type {number} */ this._pixelGroup = BubbleSet.DEFAULT_PIXEL_GROUP;
-    /** @type {number} */ this._edgeR0 = BubbleSet.DEFAULT_EDGE_R0;
-    /** @type {number} */ this._edgeR1 = BubbleSet.DEFAULT_EDGE_R1;
-    /** @type {number} */ this._nodeR0 = BubbleSet.DEFAULT_NODE_R0;
-    /** @type {number} */ this._nodeR1 = BubbleSet.DEFAULT_NODE_R1;
-    /** @type {number} */ this._morphBuffer = BubbleSet.DEFAULT_MORPH_BUFFER;
-    /** @type {number} */ this._skip = BubbleSet.DEFAULT_SKIP;
+    /** @type {number} */
+    this._maxRoutingIterations = BubbleSet.DEFAULT_MAX_ROUTING_ITERATIONS;
+    /** @type {number} */
+    this._maxMarchingIterations = BubbleSet.DEFAULT_MAX_MARCHING_ITERATIONS;
+    /** @type {number} */
+    this._pixelGroup = BubbleSet.DEFAULT_PIXEL_GROUP;
+    /** @type {number} */
+    this._edgeR0 = BubbleSet.DEFAULT_EDGE_R0;
+    /** @type {number} */
+    this._edgeR1 = BubbleSet.DEFAULT_EDGE_R1;
+    /** @type {number} */
+    this._nodeR0 = BubbleSet.DEFAULT_NODE_R0;
+    /** @type {number} */
+    this._nodeR1 = BubbleSet.DEFAULT_NODE_R1;
+    /** @type {number} */
+    this._morphBuffer = BubbleSet.DEFAULT_MORPH_BUFFER;
+    /** @type {number} */
+    this._skip = BubbleSet.DEFAULT_SKIP;
 
-    /** @type {number} */ this._threshold = 1;
-    /** @type {number} */ this._nodeInfluenceFactor = 1;
-    /** @type {number} */ this._edgeInfluenceFactor = 1;
-    /** @type {number} */ this._negativeNodeInfluenceFactor = -0.8;
-    /** @type {Rectangle | null} */ this._activeRegion = null;
-    /** @type {Line[]} */ this._virtualEdges = [];
-    /** @type {Area | null} */ this._potentialArea = null;
+    /** @type {number} */
+    this._threshold = 1;
+    /** @type {number} */
+    this._nodeInfluenceFactor = 1;
+    /** @type {number} */
+    this._edgeInfluenceFactor = 1;
+    /** @type {number} */
+    this._negativeNodeInfluenceFactor = -0.8;
+    /** @type {Rectangle | null} */
+    this._activeRegion = null;
+    /** @type {Line[]} */
+    this._virtualEdges = [];
+    /** @type {Area | null} */
+    this._potentialArea = null;
 
-    /** @type {number} */ this._lastThreshold = Number.NaN;
-    /** @type {boolean} */ this._debug = false;
+    /** @type {number} */
+    this._lastThreshold = Number.NaN;
+    /** @type {boolean} */
+    this._debug = false;
   }
 
   maxRoutingIterations(
@@ -929,24 +987,9 @@ export class BubbleSet {
   }
 
   createOutline(
-    /** @type {{
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }[]} */ members,
-    /** @type {{
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }[]} */ nonmem,
-    /** @type {{
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-    }[] | undefined} */ edges,
+    /** @type {RectObj[]} */ members,
+    /** @type {RectObj[]} */ nonmem,
+    /** @type {LineObj[] | undefined} */ edges,
   ) {
     if (!members.length) {
       return [];
@@ -1123,14 +1166,7 @@ export class BubbleSet {
     if (!this._debug) {
       console.warn('debug mode should be activated');
     }
-    /** @type {{
-         x: number;
-         y: number;
-         width: number;
-         height: number;
-         value: number;
-         threshold: number;
-     * }[]} */ const rects = [];
+    /** @type {DebugRectObj[]} */ const rects = [];
     for (let x = 0; x < this._potentialArea.width(); x += 1) {
       for (let y = 0; y < this._potentialArea.height(); y += 1) {
         rects.push({
@@ -1175,12 +1211,16 @@ export class BubbleSet {
   ) {
     // precise bounds checking
     // copy hull values
-    /** @type {Point[]} */ const g = [];
-    /** @type {Rectangle} */ let gbounds = null;
+    /** @type {Point[]} */
+    const g = [];
+    /** @type {Rectangle} */
+    let gbounds = null;
 
     const contains = (/** @type {Point[]} */ g, /** @type {Point} */ p) => {
-      /** @type {Line | null} */ let line = null;
-      /** @type {Point | null} */ let first = null;
+      /** @type {Line | null} */
+      let line = null;
+      /** @type {Point | null} */
+      let first = null;
       let crossings = 0;
       g.forEach((cur) => {
         if (!line) {
@@ -1353,7 +1393,8 @@ export class BubbleSet {
     /** @type {Rectangle[]} */ items,
     /** @type {Rectangle[]} */ nonMembers,
   ) {
-    /** @type {Rectangle[]} */ const visited = [];
+    /** @type {Rectangle[]} */
+    const visited = [];
     this._virtualEdges = [];
     this.calculateCentroidDistances(items);
     items.sort((a, b) => {
@@ -1374,11 +1415,14 @@ export class BubbleSet {
     /** @type {Rectangle} */ item,
     /** @type {Rectangle[]} */ visited,
   ) {
-    /** @type {Line[]} */ let scannedLines = [];
-    /** @type {Line[]} */ const linesToCheck = [];
+    /** @type {Line[]} */
+    let scannedLines = [];
+    /** @type {Line[]} */
+    const linesToCheck = [];
 
     const itemCenter = new Point(item.centerX(), item.centerY());
-    /** @type {Rectangle | null} */ let closestNeighbour = null;
+    /** @type {Rectangle | null} */
+    let closestNeighbour = null;
     let minLengthSq = Number.POSITIVE_INFINITY;
     // discover the nearest neighbour with minimal interference items
     visited.forEach((neighbourItem) => {
@@ -1429,7 +1473,8 @@ export class BubbleSet {
 
       let hasIntersection = true;
       let iterations = 0;
-      /** @type {Intersection[]} */ const intersections = [];
+      /** @type {Intersection[]} */
+      const intersections = [];
       intersections.length = 4;
       let numIntersections = 0;
       while (hasIntersection && iterations < this._maxRoutingIterations) {
@@ -1644,7 +1689,8 @@ export class BubbleSet {
     /** @type {Line} */ testLine,
   ) {
     let minDistance = Number.POSITIVE_INFINITY;
-    /** @type {Rectangle | null} */ let closestItem = null;
+    /** @type {Rectangle | null} */
+    let closestItem = null;
 
     items.forEach((interferenceItem) => {
       if (interferenceItem.intersectsLine(testLine)) {
@@ -2150,7 +2196,8 @@ export class BubbleSet {
     let px = x - x1;
     let py = y - y1;
     let dotprod = px * x2 + py * y2;
-    /** @type {number} */ let projlenSq;
+    /** @type {number} */
+    let projlenSq;
     if (dotprod <= 0) {
       projlenSq = 0;
     } else {
@@ -2187,8 +2234,10 @@ export class BubbleSet {
 
 export class PointPath {
   constructor(/** @type {number[][] | undefined} */ points) {
-    /** @type {number[][]} */ this._arr = [];
-    /** @type {boolean} */ this._closed = true;
+    /** @type {number[][]} */
+    this._arr = [];
+    /** @type {boolean} */
+    this._closed = true;
     if (points) {
       this.addAll(points);
     }
@@ -2246,7 +2295,7 @@ export class PointPath {
     return !this.size();
   }
 
-  transform(/** @type {{apply: (path: PointPath) => PointPath;}[]} */ ts) {
+  transform(/** @type {{apply: (path: PointPath) => PointPath}[]} */ ts) {
     /** @type {PointPath} */ let path = this;
     ts.forEach((t) => {
       path = t.apply(path);
@@ -2279,10 +2328,14 @@ class ShapeSimplifierState {
     /** @type {number} */ start,
     /** @type {number} */ tsqr,
   ) {
-    /** @type {PointPath} */ this._path = path;
-    /** @type {number} */ this._start = start;
-    /** @type {number} */ this._end = start + 1;
-    /** @type {number} */ this._tsqr = tsqr;
+    /** @type {PointPath} */
+    this._path = path;
+    /** @type {number} */
+    this._start = start;
+    /** @type {number} */
+    this._end = start + 1;
+    /** @type {number} */
+    this._tsqr = tsqr;
   }
 
   advanceEnd() {
@@ -2337,8 +2390,10 @@ class ShapeSimplifierState {
 
 export class ShapeSimplifier {
   constructor(/** @type {number} */ tolerance) {
-    /** @type {number} */ this._tolerance = 0.0;
-    /** @type {number} */ this._tsqr = 0.0;
+    /** @type {number} */
+    this._tolerance = 0.0;
+    /** @type {number} */
+    this._tsqr = 0.0;
     this.tolerance(tolerance);
   }
 
@@ -2358,7 +2413,8 @@ export class ShapeSimplifier {
     if (this.isDisabled() || path.size() < 3) {
       return path;
     }
-    /** @type {ShapeSimplifierState[]} */ const states = [];
+    /** @type {ShapeSimplifierState[]} */
+    const states = [];
     let start = 0;
     while (start < path.size()) {
       const s = new ShapeSimplifierState(path, start, this._tsqr);
@@ -2385,8 +2441,10 @@ export class BSplineShapeGenerator {
     BSplineShapeGenerator.REL_END - BSplineShapeGenerator.ORDER;
 
   constructor() {
-    /** @type {boolean} */ this._clockwise = true;
-    /** @type {number} */ this._granularity = 6.0;
+    /** @type {boolean} */
+    this._clockwise = true;
+    /** @type {number} */
+    this._granularity = 6.0;
   }
 
   granularity(/** @type {number | undefined} */ granularity) {
