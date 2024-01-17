@@ -68,8 +68,8 @@ function removeAllChilds(/** @type {SVGElement} */ parent) {
 }
 
 const colors = [
-  '#e41a1c',
   '#377eb8',
+  '#e41a1c',
   '#4daf4a',
   '#984ea3',
   '#ff7f00',
@@ -79,12 +79,47 @@ const colors = [
   '#999999',
 ];
 
-function addControls() {
+function addControls(
+  /** @type {number} */ initIx,
+  /** @type {(ix: number) => void} */ onColorUpdate,
+) {
   const top = document.getElementById('top');
+  const selectColor = document.createElement('select');
+  colors.forEach((_, ix) => {
+    const option = document.createElement('option');
+    option.setAttribute('value', `${ix}`);
+    option.innerText = `Group ${ix}`;
+    selectColor.appendChild(option);
+  });
+  selectColor.addEventListener('change', () => {
+    const newIx = +selectColor.value;
+    selectColor.style.backgroundColor = colors[newIx];
+    onColorUpdate(newIx);
+  });
+  selectColor.value = `${initIx}`;
+  selectColor.style.backgroundColor = colors[initIx];
+  top.appendChild(selectColor);
+  const footNormal = document.createElement('div');
+  footNormal.classList.add('normalonly');
+  footNormal.textContent =
+    'Add points by clicking and remove the currently closest point via Shift+Click.';
+  const footMobile = document.createElement('div');
+  footMobile.classList.add('mobileonly');
+  footMobile.textContent =
+    'Add points by tapping. Select "Show Nearest" to remove points instead.';
+  return {
+    updateColor: (/** @type {number} */ ix) => {
+      selectColor.value = `${ix}`;
+    },
+  };
 }
 
 function start() {
-  addControls();
+  let curColor = 0;
+  const controls = addControls(curColor, (ix) => {
+    curColor = ix;
+    update();
+  });
   const bubbles = new BubbleSet();
   /** @type {SVGRectObj[][]} */
   const rectangles = colors.map(() => []);
@@ -96,7 +131,6 @@ function start() {
   // bubbles.debug(true); // FIXME read from somewhere
   /** @type {number | null} */
   let debugFor = null;
-  let curColor = 0;
 
   function restangles(/** @type {number} */ ix) {
     return rectangles.flatMap((cur, curIx) => {
