@@ -67,24 +67,50 @@ function removeAllChilds(/** @type {SVGElement} */ parent) {
   }
 }
 
+const colors = [
+  '#e41a1c',
+  '#377eb8',
+  '#4daf4a',
+  '#984ea3',
+  '#ff7f00',
+  '#ffff33',
+  '#a65628',
+  '#f781bf',
+  '#999999',
+];
+
+function addControls() {
+  const top = document.getElementById('top');
+}
+
 function start() {
+  addControls();
   const bubbles = new BubbleSet();
-  /** @type {SVGRectObj[]} */
-  const rectanglesA = [];
-  /** @type {SVGRectObj[]} */
-  const rectanglesB = [];
+  /** @type {SVGRectObj[][]} */
+  const rectangles = colors.map(() => []);
   const main = document.getElementById('main');
   const items = appendSVG(main, 'g');
-  const pathA = appendSVG(main, 'path');
-  const pathB = appendSVG(main, 'path');
+  const paths = rectangles.map(() => appendSVG(main, 'path'));
   const debug = appendSVG(main, 'g');
   bubbles.debug(false);
   // bubbles.debug(true); // FIXME read from somewhere
-  const debugFor = pathA;
+  /** @type {number | null} */
+  let debugFor = null;
+  let curColor = 0;
+
+  function restangles(/** @type {number} */ ix) {
+    return rectangles.flatMap((cur, curIx) => {
+      if (curIx === ix) {
+        return [];
+      }
+      return cur;
+    });
+  }
 
   function update() {
-    updateOutline(rectanglesA, rectanglesB, 'crimson', pathA);
-    updateOutline(rectanglesB, rectanglesA, 'cornflowerblue', pathB);
+    rectangles.forEach((rectangles, ix) => {
+      updateOutline(rectangles, restangles(ix), colors[ix], paths[ix], ix);
+    });
   }
 
   function updateOutline(
@@ -92,6 +118,7 @@ function start() {
     /** @type {SVGRectObj[]} */ otherRectangles,
     /** @type {string} */ color,
     /** @type {SVGElement} */ path,
+    /** @type {number} */ ix,
   ) {
     const pad = 5;
     const list = bubbles.createOutline(
@@ -114,7 +141,7 @@ function start() {
       fill: color,
       stroke: 'black',
     });
-    if (bubbles.debug() && path === debugFor) {
+    if (bubbles.debug() && ix === debugFor) {
       removeAllChilds(debug);
       bubbles.debugPotentialArea().forEach((r) => {
         const rect = appendSVG(debug, 'rect');
@@ -174,16 +201,8 @@ function start() {
   }
 
   main.addEventListener('click', (e) => {
-    addRect(rectanglesA, 'cornflowerblue', e.offsetX, e.offsetY);
-  });
-  let oldX = Number.NaN;
-  let oldY = Number.NaN;
-  main.addEventListener('contextmenu', (e) => {
-    if (oldX === e.offsetX && oldY === e.offsetY) return;
-    oldX = e.offsetX;
-    oldY = e.offsetY;
-    addRect(rectanglesB, 'crimson', e.offsetX, e.offsetY);
-    e.preventDefault();
+    const ix = curColor;
+    addRect(rectangles[ix], colors[ix], e.offsetX, e.offsetY);
   });
 }
 
