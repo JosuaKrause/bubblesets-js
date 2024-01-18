@@ -15,7 +15,23 @@
  */
 // @ts-check
 
-/** @typedef {{x: number, y: number, width: number, height: number, elem: SVGElement}} SVGRectObj */
+/** @typedef {import('./bubblesets').RectObj} RectObj */
+/**
+ * @typedef {{
+ *  x: number,
+ *  y: number,
+ *  width: number,
+ *  height: number,
+ *  elem: SVGElement,
+ * }} SVGRectObj
+ */
+/**
+ * @typedef {{
+ *  initIx: number,
+ *  onColorUpdate: (ix: number) => void,
+ *  onDebugUpdate: (isDebug: boolean) => void,
+ * }} Controls
+ */
 
 import {
   BSplineShapeGenerator,
@@ -26,28 +42,28 @@ import {
 
 function attr(
   /** @type {SVGElement} */ elem,
-  /** @type {{ [key: string]: string | null }} */ attr,
+  /** @type {{ [key: string]: string | number | null }} */ attr,
 ) {
   for (const key of Object.keys(attr)) {
     const value = attr[key];
     if (value === null) {
       elem.removeAttribute(key);
     } else {
-      elem.setAttribute(key, value);
+      elem.setAttribute(key, `${value}`);
     }
   }
 }
 
 function style(
   /** @type {SVGElement} */ elem,
-  /** @type {{ [key: string]: string | null }} */ style,
+  /** @type {{ [key: string]: string | number | null }} */ style,
 ) {
   for (const key of Object.keys(style)) {
     const value = style[key];
     if (value === null) {
       elem.style.removeProperty(key);
     } else {
-      elem.style.setProperty(key, value);
+      elem.style.setProperty(key, `${value}`);
     }
   }
 }
@@ -79,26 +95,50 @@ const colors = [
   '#999999',
 ];
 
-function addControls(
-  /** @type {number} */ initIx,
-  /** @type {(ix: number) => void} */ onColorUpdate,
+function addColorSelect(
+  /** @type {HTMLElement} */ main,
+  /** @type {Controls} */ controls,
 ) {
-  const top = document.getElementById('top');
   const selectColor = document.createElement('select');
   colors.forEach((_, ix) => {
     const option = document.createElement('option');
-    option.setAttribute('value', `${ix}`);
+    option.value = `${ix}`;
     option.innerText = `Group ${ix}`;
     selectColor.appendChild(option);
   });
   selectColor.addEventListener('change', () => {
     const newIx = +selectColor.value;
     selectColor.style.backgroundColor = colors[newIx];
-    onColorUpdate(newIx);
+    controls.onColorUpdate(newIx);
   });
-  selectColor.value = `${initIx}`;
-  selectColor.style.backgroundColor = colors[initIx];
-  top.appendChild(selectColor);
+  selectColor.value = `${controls.initIx}`;
+  selectColor.style.backgroundColor = colors[controls.initIx];
+  main.appendChild(selectColor);
+  return {
+    updateColor: (/** @type {number} */ ix) => {
+      selectColor.value = `${ix}`;
+    },
+  };
+}
+
+function addDebugToggle(
+  /** @type {HTMLElement} */ main,
+  /** @type {Controls} */ controls,
+) {
+  const toggle = document.createElement('input');
+  toggle.setAttribute('type', 'checkbox');
+  toggle.checked = false;
+  toggle.addEventListener('change', () => {
+    controls.onDebugUpdate(toggle.checked);
+  });
+  main.appendChild(toggle);
+  return {};
+}
+
+function addControls(/** @type {Controls} */ controls) {
+  const top = document.getElementById('top');
+  const colorControls = addColorSelect(top, controls);
+  const debugControls = addDebugToggle(top, controls);
   const footNormal = document.createElement('div');
   footNormal.classList.add('normalonly');
   footNormal.textContent =
@@ -108,17 +148,131 @@ function addControls(
   footMobile.textContent =
     'Add points by tapping. Select "Show Nearest" to remove points instead.';
   return {
-    updateColor: (/** @type {number} */ ix) => {
-      selectColor.value = `${ix}`;
-    },
+    ...colorControls,
+    ...debugControls,
   };
+}
+
+const DEFAULT_WIDTH = 40;
+const DEFAULT_HEIGHT = 30;
+
+function rectFromPoint(/** @type {number} */ cx, /** @type {number} */ cy) {
+  const width = DEFAULT_WIDTH;
+  const height = DEFAULT_HEIGHT;
+  const x = cx - width * 0.5;
+  const y = cy - height * 0.5;
+  return {
+    x,
+    y,
+    width,
+    height,
+  };
+}
+
+function addRect(
+  /** @type {SVGElement} */ items,
+  /** @type {SVGRectObj[]} */ rectangles,
+  /** @type {string} */ color,
+  /** @type {RectObj} */ rect,
+) {
+  const elem = appendSVG(items, 'rect');
+  attr(elem, rect);
+  style(elem, {
+    stroke: 'black',
+    'stroke-width': `${1}`,
+    fill: color,
+  });
+  rectangles.push({
+    ...rect,
+    elem: elem,
+  });
+}
+
+function clearAll(
+  /** @type {SVGElement} */ items,
+  /** @type {SVGRectObj[][]} */ rectangles,
+) {
+  removeAllChilds(items);
+  colors.forEach((_, ix) => {
+    rectangles[ix] = [];
+  });
+}
+
+function parseData(
+  /** @type {SVGElement} */ items,
+  /** @type {SVGRectObj[][]} */ rectangles,
+  /** @type {string | null} */ data,
+) {
+  clearAll(items, rectangles);
+  if (!data) {
+    return;
+  }
+  JSON.parse(atob(data)).forEach(
+    (/** @type {number[][]} */ rects, /** @type {number} */ ix) => {
+      if (ix >= rectangles.length) {
+        return;
+      }
+      rects.map((r) =>
+        addRect(items, rectangles[ix], colors[ix], {
+          x: +r[0],
+          y: +r[1],
+          width: +(r[2] ?? DEFAULT_WIDTH),
+          height: +(r[3] ?? DEFAULT_HEIGHT),
+        }),
+      );
+    },
+  );
+}
+
+function generateData(/** @type {SVGRectObj[][]} */ rectangles) {
+  if (rectangles.every((rects) => !rects.length)) {
+    return null;
+  }
+  return btoa(
+    JSON.stringify(
+      rectangles.map((rects) =>
+        rects.map((r) => {
+          if (r.width === DEFAULT_WIDTH && r.height === DEFAULT_HEIGHT) {
+            return [r.x, r.y];
+          }
+          return [r.x, r.y, r.width, r.height];
+        }),
+      ),
+      undefined,
+      0,
+    ),
+  );
+}
+
+function updateURL(/** @type {SVGRectObj[][]} */ rectangles) {
+  try {
+    const data = generateData(rectangles);
+    const url = new URL(location.href);
+    url.searchParams.set('data', data);
+    window.history.pushState(
+      {
+        data,
+      },
+      '',
+      url,
+    );
+  } catch (_) {
+    // ignore errors
+  }
 }
 
 function start() {
   let curColor = 0;
-  const controls = addControls(curColor, (ix) => {
-    curColor = ix;
-    update();
+  addControls({
+    initIx: curColor,
+    onColorUpdate: (ix) => {
+      curColor = ix;
+      update();
+    },
+    onDebugUpdate: (isDebug) => {
+      bubbles.debug(isDebug);
+      update();
+    },
   });
   const bubbles = new BubbleSet();
   /** @type {SVGRectObj[][]} */
@@ -128,9 +282,6 @@ function start() {
   const paths = rectangles.map(() => appendSVG(main, 'path'));
   const debug = appendSVG(main, 'g');
   bubbles.debug(false);
-  // bubbles.debug(true); // FIXME read from somewhere
-  /** @type {number | null} */
-  let debugFor = null;
 
   function restangles(/** @type {number} */ ix) {
     return rectangles.flatMap((cur, curIx) => {
@@ -142,6 +293,7 @@ function start() {
   }
 
   function update() {
+    removeAllChilds(debug);
     rectangles.forEach((rectangles, ix) => {
       updateOutline(rectangles, restangles(ix), colors[ix], paths[ix], ix);
     });
@@ -175,8 +327,7 @@ function start() {
       fill: color,
       stroke: 'black',
     });
-    if (bubbles.debug() && ix === debugFor) {
-      removeAllChilds(debug);
+    if (!outline.isEmpty() && ix === curColor && bubbles.debug()) {
       bubbles.debugPotentialArea().forEach((r) => {
         const rect = appendSVG(debug, 'rect');
         attr(rect, {
@@ -202,41 +353,36 @@ function start() {
     }
   }
 
-  function addRect(
-    /** @type {SVGRectObj[]} */ rectangles,
-    /** @type {string} */ color,
-    /** @type {number} */ cx,
-    /** @type {number} */ cy,
-  ) {
-    const width = 40;
-    const height = 30;
-    const x = cx - width * 0.5;
-    const y = cy - height * 0.5;
-    const elem = appendSVG(items, 'rect');
-    attr(elem, {
-      x: `${x}`,
-      y: `${y}`,
-      width: `${width}`,
-      height: `${height}`,
-    });
-    style(elem, {
-      stroke: 'black',
-      'stroke-width': `${1}`,
-      fill: color,
-    });
-    rectangles.push({
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-      elem: elem,
-    });
+  main.addEventListener('click', (e) => {
+    const ix = curColor;
+    addRect(
+      items,
+      rectangles[ix],
+      colors[ix],
+      rectFromPoint(e.offsetX, e.offsetY),
+    );
+    update();
+    updateURL(rectangles);
+  });
+
+  function load(/** @type {string | null} */ data) {
+    try {
+      parseData(items, rectangles, data);
+    } catch (_) {
+      // ignore errors
+    }
     update();
   }
 
-  main.addEventListener('click', (e) => {
-    const ix = curColor;
-    addRect(rectangles[ix], colors[ix], e.offsetX, e.offsetY);
+  const url = new URL(location.href);
+  const loadData = url.searchParams.get('data');
+  if (loadData) {
+    load(loadData);
+  }
+  window.addEventListener('popstate', (event) => {
+    /** @type {string | null} */
+    const data = event.state?.data;
+    load(data ?? null);
   });
 }
 
