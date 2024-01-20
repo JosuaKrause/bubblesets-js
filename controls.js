@@ -154,6 +154,7 @@ function addPaddingSlider(
     max: `${maxValue}`,
     step: `${step}`,
   });
+  range.classList.add('range');
   const edit = document.createElement('input');
   attr(edit, {
     id: `pad-range-edit`,
