@@ -107,6 +107,27 @@ function generateData(/** @type {SVGRectObj[][]} */ rectangles) {
   );
 }
 
+/** @type {HTMLLinkElement | null} */
+let CANONICAL = null;
+
+function updateCanonical() {
+  if (!CANONICAL) {
+    const linkTag = document.createElement('link');
+    linkTag.setAttribute('rel', 'canonical');
+    CANONICAL = linkTag;
+    document.head.appendChild(linkTag);
+  }
+  const url = new URL(location.href);
+  const searchParams = new URLSearchParams();
+  const preset = url.searchParams.get('preset');
+  if (preset) {
+    searchParams.set('preset', preset);
+  }
+  url.search = `${searchParams}`;
+  url.hash = '';
+  CANONICAL.href = `${url}`;
+}
+
 function updateURL(
   /** @type {Preset} */ preset,
   /** @type {SVGRectObj[][]} */ rectangles,
@@ -128,7 +149,6 @@ function updateURL(
       url.searchParams.delete('data');
     }
     if (`${location.href}` !== `${url}`) {
-      console.log('new state');
       window.history.pushState(
         {
           preset: presetId,
@@ -137,6 +157,7 @@ function updateURL(
         '',
         url,
       );
+      updateCanonical();
     }
   } catch (_) {
     // ignore errors
@@ -367,6 +388,7 @@ function start() {
     } catch (_) {
       // ignore errors
     }
+    updateCanonical();
     update();
   }
 
