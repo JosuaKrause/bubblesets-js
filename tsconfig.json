@@ -6,5 +6,11 @@
     "noEmit": true,
     "lib": ["ES2023", "DOM"]
   },
-  "files": ["bubblesets.js", "index.js"]
+  "files": [
+    "bubblesets.js",
+    "index.js",
+    "controls.js",
+    "presets.js",
+    "util.js"
+  ]
 }

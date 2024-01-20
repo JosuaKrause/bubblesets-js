@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta
+      http-equiv="refresh"
+      content="0; URL=https://bubblesets-js.josuakrause.com/index.html?preset=cliques"
+    />
     <!-- Google tag (gtag.js) -->
     <script
       async
@@ -11,8 +15,8 @@
     ></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
+      function gtag(...args) {
+        window.dataLayer.push(args);
       }
       gtag('js', new Date());
 
@@ -22,246 +26,17 @@
     <title>Bubblesets - Cliques</title>
     <link
       rel="canonical"
-      href="https://bubblesets-js.josuakrause.com/cliques.html"
+      href="https://bubblesets-js.josuakrause.com/index.html?preset=cliques"
     />
-    <script src="bubblesets.js" charset="utf-8"></script>
-    <style type="text/css">
-      * {
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-size: 14px;
-        font-style: normal;
-        font-variant: normal;
-        font-weight: 400;
-        box-sizing: border-box;
-      }
-
-      @media (hover: none) and (max-width: 480px) {
-        * {
-          font-size: 16px;
-          line-height: 32px;
-          padding: 2px;
-          margin: 2px;
-        }
-
-        body {
-          padding: 0;
-          margin: 0;
-        }
-      }
-
-      body {
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-      }
-
-      h3 {
-        font-size: 1.25em;
-        font-weight: 500;
-      }
-
-      a,
-      a:visited {
-        color: black;
-      }
-
-      a:hover,
-      a:focus {
-        color: #444;
-      }
-
-      svg {
-        max-width: 99vw;
-      }
-
-      footer {
-        position: fixed;
-        bottom: 0;
-        right: 0;
-        z-index: 1;
-        pointer-events: none;
-      }
-
-      .footer-style {
-        padding: 10px;
-        text-align: right;
-        filter: drop-shadow(0 0 4px white) drop-shadow(0 0 4px white)
-          drop-shadow(0 0 4px white) drop-shadow(0 0 4px white);
-        font-weight: 300;
-      }
-
-      .footer-style a {
-        font-weight: 300;
-        pointer-events: fill;
-      }
-    </style>
   </head>
-  <body onload="start()">
+  <body>
     <h3>Example of Cliques with Bubblesets</h3>
-    <svg
-      style="
-        width: 200px;
-        height: 270px;
-        margin: 0;
-        padding: 0;
-        display: block;
-      "
+    <a href="https://bubblesets-js.josuakrause.com/index.html?preset=cliques"
+      >This page has moved!</a
     >
-      <rect
-        x="0"
-        y="0"
-        width="100%"
-        height="100%"
-        style="stroke: black; stroke-width: 1; fill: none"
-      ></rect>
-      <path id="path_a" fill="#e41a1c" opacity="0.5" stroke="black"></path>
-      <path id="path_b" fill="#377eb8" opacity="0.5" stroke="black"></path>
-      <path id="path_c" fill="#4daf4a" opacity="0.5" stroke="black"></path>
-      <g id="gedges"></g>
-      <g id="grects"></g>
-    </svg>
     <script>
-      function start() {
-        var grects = document.getElementById('grects');
-        var gedges = document.getElementById('gedges');
-        var pathA = document.getElementById('path_a');
-        var pathB = document.getElementById('path_b');
-        var pathC = document.getElementById('path_c');
-
-        function removeAllChildren(elem) {
-          while (elem.firstChild) {
-            elem.removeChild(elem.firstChild);
-          }
-        }
-
-        // remove old edges/rectangles
-        removeAllChildren(grects);
-        removeAllChildren(gedges);
-
-        var size = 10;
-        var pad = 5;
-        var bubbles = new BubbleSet();
-
-        // nodes [ x, y ]
-        var nodes = [
-          [100, 50],
-          [150, 100],
-          [50, 100],
-          [100, 150],
-          [60, 210],
-          [140, 210],
-        ];
-        // edges [ source_ix, destination_ix ]
-        var edges = [
-          [0, 2],
-          [0, 3],
-          [1, 2],
-          [1, 3],
-          [2, 3],
-          [3, 4],
-          [3, 5],
-          [4, 5],
-        ];
-
-        // clique rectangle indices
-        var rectanglesA = [0, 2, 3];
-        var rectanglesB = [1, 2, 3];
-        var rectanglesC = [3, 4, 5];
-        var allIxs = nodes.map(function (_, ix) {
-          return ix;
-        });
-
-        function ixToRectangle(ix) {
-          return {
-            x: nodes[ix][0] - size * 0.5,
-            y: nodes[ix][1] - size * 0.5,
-            width: size,
-            height: size,
-          };
-        }
-
-        function ixsToEdge(edge) {
-          return {
-            x1: nodes[edge[0]][0],
-            y1: nodes[edge[0]][1],
-            x2: nodes[edge[1]][0],
-            y2: nodes[edge[1]][1],
-          };
-        }
-
-        function getRectangleSets(rects, others) {
-          var rSet = {};
-          rects.forEach(function (ix) {
-            rSet[ix] = true;
-          });
-          var actualOthers = others.filter(function (ix) {
-            return !rSet[ix]; // remove rectangles that are in our set
-          });
-          return [rects.map(ixToRectangle), actualOthers.map(ixToRectangle)];
-        }
-
-        function getEdges(rects) {
-          var rSet = {};
-          rects.forEach(function (ix) {
-            rSet[ix] = true;
-          });
-          return edges
-            .filter(function (e) {
-              return rSet[e[0]] && rSet[e[1]]; // only consider fully contained edges
-            })
-            .map(ixsToEdge);
-        }
-
-        function doBubbles(rects, others, elem) {
-          var rectSets = getRectangleSets(rects, others);
-          var list = bubbles.createOutline(
-            BubbleSet.addPadding(rectSets[0], pad),
-            BubbleSet.addPadding(rectSets[1], pad),
-            getEdges(rects),
-          );
-          var outline = new PointPath(list).transform([
-            new ShapeSimplifier(0.0),
-            new BSplineShapeGenerator(),
-            new ShapeSimplifier(0.0),
-          ]);
-          elem.setAttribute('d', outline.toString());
-        }
-
-        doBubbles(rectanglesA, allIxs, pathA);
-        doBubbles(rectanglesB, allIxs, pathB);
-        doBubbles(rectanglesC, allIxs, pathC);
-
-        function createRectangle(parent, rect) {
-          var newRect = parent.appendChild(
-            document.createElementNS('http://www.w3.org/2000/svg', 'rect'),
-          );
-          newRect.setAttribute('x', rect['x']);
-          newRect.setAttribute('y', rect['y']);
-          newRect.setAttribute('width', rect['width']);
-          newRect.setAttribute('height', rect['height']);
-          newRect.setAttribute('fill', 'silver');
-          newRect.setAttribute('stroke', 'black');
-        }
-
-        function createLine(parent, line) {
-          var newLine = parent.appendChild(
-            document.createElementNS('http://www.w3.org/2000/svg', 'line'),
-          );
-          newLine.setAttribute('x1', line['x1']);
-          newLine.setAttribute('y1', line['y1']);
-          newLine.setAttribute('x2', line['x2']);
-          newLine.setAttribute('y2', line['y2']);
-          newLine.setAttribute('stroke', 'black');
-          newLine.setAttribute('stroke-width', '1');
-        }
-
-        allIxs.map(ixToRectangle).forEach(function (rect) {
-          createRectangle(grects, rect);
-        });
-        edges.map(ixsToEdge).forEach(function (e) {
-          createLine(gedges, e);
-        });
-      } // start
+      window.location =
+        'https://bubblesets-js.josuakrause.com/index.html?preset=cliques';
     </script>
     <footer>
       <div class="footer-style">
