@@ -27,21 +27,27 @@
  */
 /**
  * @typedef {{
+ *  initPreset: number,
  *  initIx: number,
+ *  onPresetUpdate: (ix: number, create: (items: SVGElement, rectangles: SVGRectObj[][]) => void | null) => void,
  *  onColorUpdate: (ix: number) => void,
  *  onDebugUpdate: (isDebug: boolean) => void,
+ *  onRemoveUpdate: (isRemove: boolean) => void,
+ *  onClear: () => void,
  * }} Controls
  */
 
 import {
   BSplineShapeGenerator,
   BubbleSet,
+  Point,
   PointPath,
+  Rectangle,
   ShapeSimplifier,
 } from './bubblesets.js';
 
 function attr(
-  /** @type {SVGElement} */ elem,
+  /** @type {HTMLElement | SVGElement} */ elem,
   /** @type {{ [key: string]: string | number | null }} */ attr,
 ) {
   for (const key of Object.keys(attr)) {
@@ -55,7 +61,7 @@ function attr(
 }
 
 function style(
-  /** @type {SVGElement} */ elem,
+  /** @type {HTMLElement | SVGElement} */ elem,
   /** @type {{ [key: string]: string | number | null }} */ style,
 ) {
   for (const key of Object.keys(style)) {
@@ -83,6 +89,26 @@ function removeAllChilds(/** @type {SVGElement} */ parent) {
   }
 }
 
+function fromPointList(
+  /** @type {SVGElement} */ items,
+  /** @type {SVGRectObj[][]} */ rectangles,
+  /** @type {number[][][]} */ points,
+) {
+  points.forEach((colorPoints, ix) => {
+    if (ix >= colors.length) {
+      return;
+    }
+    colorPoints.forEach((point) => {
+      addRect(items, rectangles[ix], colors[ix], {
+        x: point[0],
+        y: point[1],
+        width: DEFAULT_WIDTH,
+        height: DEFAULT_HEIGHT,
+      });
+    });
+  });
+}
+
 const colors = [
   '#377eb8',
   '#e41a1c',
@@ -95,11 +121,107 @@ const colors = [
   '#999999',
 ];
 
+/**
+ * @type {{
+ *  name: string,
+ *  create: (items: SVGElement, rectangles: SVGRectObj[][]) => void | null,
+ * }[]}
+ */
+const presets = [
+  {
+    name: 'Custom',
+    create: null,
+  },
+  {
+    name: 'Big B',
+    create: (items, rectangles) => {
+      const points = [
+        [
+          [498, 142],
+          [503, 241],
+          [494, 36],
+        ],
+        [
+          [495, 346],
+          [496, 469],
+          [536, 255],
+        ],
+        [
+          [526, 471],
+          [680, 340],
+          [608, 468],
+          [670, 416],
+        ],
+        [
+          [662, 314],
+          [575, 257],
+          [650, 207],
+        ],
+        [
+          [683, 97],
+          [610, 46],
+          [533, 31],
+          [688, 190],
+        ],
+      ];
+      fromPointList(items, rectangles, points);
+    },
+  },
+];
+
+function addDivider(/** @type {HTMLElement} */ main) {
+  const div = document.createElement('div');
+  div.classList.add('divider');
+  main.appendChild(div);
+}
+
+function addLabel(
+  /** @type {HTMLElement} */ main,
+  /** @type {HTMLElement} */ target,
+  /** @type {string} */ name,
+  /** @type {string} */ desc,
+) {
+  const label = document.createElement('label');
+  label.setAttribute('for', name);
+  label.textContent = desc;
+  main.appendChild(label);
+  attr(target, { id: name, name });
+}
+
+function addPresetSelect(
+  /** @type {HTMLElement} */ main,
+  /** @type {Controls} */ controls,
+) {
+  const div = document.createElement('div');
+  const selectPreset = document.createElement('select');
+  addLabel(div, selectPreset, 'select-preset', 'Preset:');
+  presets.forEach((preset, ix) => {
+    const option = document.createElement('option');
+    option.value = `${ix}`;
+    option.innerText = preset.name;
+    selectPreset.appendChild(option);
+  });
+  selectPreset.addEventListener('change', () => {
+    const newIx = +selectPreset.value;
+    controls.onPresetUpdate(newIx, presets[newIx].create);
+  });
+  selectPreset.value = `${controls.initPreset}`;
+  div.appendChild(selectPreset);
+  main.appendChild(div);
+  return {
+    updatePreset: (/** @type {number} */ ix) => {
+      selectPreset.value = `${ix}`;
+    },
+  };
+}
+
 function addColorSelect(
   /** @type {HTMLElement} */ main,
   /** @type {Controls} */ controls,
 ) {
+  const div = document.createElement('div');
   const selectColor = document.createElement('select');
+  addLabel(div, selectColor, 'select-color', 'Color:');
   colors.forEach((_, ix) => {
     const option = document.createElement('option');
     option.value = `${ix}`;
@@ -113,10 +235,32 @@ function addColorSelect(
   });
   selectColor.value = `${controls.initIx}`;
   selectColor.style.backgroundColor = colors[controls.initIx];
-  main.appendChild(selectColor);
+  div.appendChild(selectColor);
+  main.appendChild(div);
   return {
     updateColor: (/** @type {number} */ ix) => {
       selectColor.value = `${ix}`;
+    },
+  };
+}
+
+function addRemoveToggle(
+  /** @type {HTMLElement} */ main,
+  /** @type {Controls} */ controls,
+) {
+  const div = document.createElement('div');
+  const toggle = document.createElement('input');
+  addLabel(div, toggle, 'remove', 'Remove:');
+  toggle.setAttribute('type', 'checkbox');
+  toggle.checked = false;
+  toggle.addEventListener('change', () => {
+    controls.onRemoveUpdate(toggle.checked);
+  });
+  div.appendChild(toggle);
+  main.appendChild(div);
+  return {
+    setRemoveMode: (/** @type {boolean} */ isRemove) => {
+      toggle.checked = isRemove;
     },
   };
 }
@@ -125,31 +269,60 @@ function addDebugToggle(
   /** @type {HTMLElement} */ main,
   /** @type {Controls} */ controls,
 ) {
+  const div = document.createElement('div');
   const toggle = document.createElement('input');
+  addLabel(div, toggle, 'debug', 'Show Potential Field:');
   toggle.setAttribute('type', 'checkbox');
   toggle.checked = false;
   toggle.addEventListener('change', () => {
     controls.onDebugUpdate(toggle.checked);
   });
-  main.appendChild(toggle);
+  div.appendChild(toggle);
+  main.appendChild(div);
+  return {};
+}
+
+function addRemoveAll(
+  /** @type {HTMLElement} */ main,
+  /** @type {Controls} */ controls,
+) {
+  const div = document.createElement('div');
+  const removeAll = document.createElement('input');
+  removeAll.setAttribute('type', 'button');
+  removeAll.value = 'Clear';
+  removeAll.addEventListener('click', () => {
+    controls.onClear();
+  });
+  div.appendChild(removeAll);
+  main.appendChild(div);
   return {};
 }
 
 function addControls(/** @type {Controls} */ controls) {
-  const top = document.getElementById('top');
+  const top = document.getElementById('topbar');
+  const presetControls = addPresetSelect(top, controls);
   const colorControls = addColorSelect(top, controls);
+  const removeControls = addRemoveToggle(top, controls);
+  addDivider(top);
   const debugControls = addDebugToggle(top, controls);
+  const clearControls = addRemoveAll(top, controls);
   const footNormal = document.createElement('div');
   footNormal.classList.add('normalonly');
   footNormal.textContent =
-    'Add points by clicking and remove the currently closest point via Shift+Click.';
+    'Add boxes by clicking and remove the currently closest point via Shift+Click.';
   const footMobile = document.createElement('div');
   footMobile.classList.add('mobileonly');
   footMobile.textContent =
-    'Add points by tapping. Select "Show Nearest" to remove points instead.';
+    'Add boxes by tapping. Select "Remove" to remove points instead.';
+  const footer = document.getElementById('footer');
+  footer.appendChild(footNormal);
+  footer.appendChild(footMobile);
   return {
+    ...presetControls,
     ...colorControls,
+    ...removeControls,
     ...debugControls,
+    ...clearControls,
   };
 }
 
@@ -186,6 +359,26 @@ function addRect(
     ...rect,
     elem: elem,
   });
+}
+
+function removeRect(
+  /** @type {SVGElement} */ items,
+  /** @type {SVGRectObj[][]} */ rectangles,
+  /** @type {number} */ x,
+  /** @type {number} */ y,
+) {
+  const point = new Point(x, y);
+  const ref = new Rectangle();
+  for (let ix = 0; ix < rectangles.length; ix += 1) {
+    rectangles[ix] = rectangles[ix].filter((rect) => {
+      ref.rect(rect);
+      if (!ref.contains(point)) {
+        return true;
+      }
+      items.removeChild(rect.elem);
+      return false;
+    });
+  }
 }
 
 function clearAll(
@@ -228,16 +421,22 @@ function generateData(/** @type {SVGRectObj[][]} */ rectangles) {
   if (rectangles.every((rects) => !rects.length)) {
     return null;
   }
+  const highIx = rectangles.reduce(
+    (highIx, rects, ix) => (rects.length ? ix + 1 : highIx),
+    0,
+  );
   return btoa(
     JSON.stringify(
-      rectangles.map((rects) =>
-        rects.map((r) => {
-          if (r.width === DEFAULT_WIDTH && r.height === DEFAULT_HEIGHT) {
-            return [r.x, r.y];
-          }
-          return [r.x, r.y, r.width, r.height];
-        }),
-      ),
+      rectangles
+        .map((rects) =>
+          rects.map((r) => {
+            if (r.width === DEFAULT_WIDTH && r.height === DEFAULT_HEIGHT) {
+              return [r.x, r.y];
+            }
+            return [r.x, r.y, r.width, r.height];
+          }),
+        )
+        .slice(0, highIx),
       undefined,
       0,
     ),
@@ -248,40 +447,86 @@ function updateURL(/** @type {SVGRectObj[][]} */ rectangles) {
   try {
     const data = generateData(rectangles);
     const url = new URL(location.href);
-    url.searchParams.set('data', data);
-    window.history.pushState(
-      {
-        data,
-      },
-      '',
-      url,
-    );
+    if (data) {
+      console.log(atob(data));
+      url.searchParams.set('data', data);
+    } else {
+      url.searchParams.delete('data');
+    }
+    if (`${location.href}` !== `${url}`) {
+      console.log('new state');
+      window.history.pushState(
+        {
+          data,
+        },
+        '',
+        url,
+      );
+    }
   } catch (_) {
     // ignore errors
   }
 }
 
+function isTextTarget(/** @type {HTMLElement} */ target) {
+  if (!target) {
+    return false;
+  }
+  if (target.localName !== 'input') {
+    return false;
+  }
+  if (target.getAttribute('type') !== 'text') {
+    return false;
+  }
+  return true;
+}
+
 function start() {
+  let curPreset = 1;
   let curColor = 0;
-  addControls({
+  let removeMode = false;
+  /** @type {SVGRectObj[][]} */
+  const rectangles = colors.map(() => []);
+  const bubbles = new BubbleSet();
+  const main = document.getElementById('main');
+  const svg = appendSVG(main, 'svg');
+  const full = appendSVG(svg, 'rect');
+  attr(full, { x: '0', y: '0', width: '100%', height: '100%' });
+  style(full, { fill: 'none' });
+  const items = appendSVG(svg, 'g');
+  const paths = rectangles.map(() => appendSVG(svg, 'path'));
+  const debug = appendSVG(svg, 'g');
+  bubbles.debug(false);
+
+  const controls = addControls({
+    initPreset: curPreset,
     initIx: curColor,
+    onPresetUpdate: (ix, create) => {
+      curPreset = ix;
+      if (create) {
+        clearAll(items, rectangles);
+        create(items, rectangles);
+        update();
+        updateURL(rectangles);
+      }
+    },
     onColorUpdate: (ix) => {
       curColor = ix;
       update();
+    },
+    onRemoveUpdate: (isRemove) => {
+      removeMode = isRemove;
     },
     onDebugUpdate: (isDebug) => {
       bubbles.debug(isDebug);
       update();
     },
+    onClear: () => {
+      clearAll(items, rectangles);
+      update();
+      updateURL(rectangles);
+    },
   });
-  const bubbles = new BubbleSet();
-  /** @type {SVGRectObj[][]} */
-  const rectangles = colors.map(() => []);
-  const main = document.getElementById('main');
-  const items = appendSVG(main, 'g');
-  const paths = rectangles.map(() => appendSVG(main, 'path'));
-  const debug = appendSVG(main, 'g');
-  bubbles.debug(false);
 
   function restangles(/** @type {number} */ ix) {
     return rectangles.flatMap((cur, curIx) => {
@@ -353,21 +598,64 @@ function start() {
     }
   }
 
-  main.addEventListener('click', (e) => {
+  svg.addEventListener('click', (e) => {
     const ix = curColor;
-    addRect(
-      items,
-      rectangles[ix],
-      colors[ix],
-      rectFromPoint(e.offsetX, e.offsetY),
-    );
+    if (removeMode) {
+      removeRect(items, rectangles, e.offsetX, e.offsetY);
+    } else {
+      addRect(
+        items,
+        rectangles[ix],
+        colors[ix],
+        rectFromPoint(e.offsetX, e.offsetY),
+      );
+    }
+    controls.updatePreset(0);
     update();
     updateURL(rectangles);
   });
 
+  window.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented) {
+      return;
+    }
+    const target = /** @type {HTMLElement | null} */ (e.target);
+    if (isTextTarget(target)) {
+      return;
+    }
+    const matches = /Digit([0-9])/.exec(e.code);
+    if (matches) {
+      const digit = +matches[1];
+      if (digit < rectangles.length) {
+        controls.updateColor(digit);
+        if (target && target.blur) {
+          target.blur();
+        }
+        e.preventDefault();
+      }
+    }
+  });
+
+  const onShift = (/** @type {KeyboardEvent} */ e) => {
+    const target = /** @type {HTMLElement | null} */ (e.target);
+    if (isTextTarget(target)) {
+      return;
+    }
+    if (e.key === 'Shift') {
+      controls.setRemoveMode(e.shiftKey);
+      if (target && target.blur) {
+        target.blur();
+      }
+      e.preventDefault();
+    }
+  };
+  window.addEventListener('keydown', onShift);
+  window.addEventListener('keyup', onShift);
+
   function load(/** @type {string | null} */ data) {
     try {
       parseData(items, rectangles, data);
+      controls.updatePreset(0);
     } catch (_) {
       // ignore errors
     }
