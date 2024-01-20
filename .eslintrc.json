@@ -1,0 +1,21 @@
+{
+  "env": {
+    "browser": true,
+    "node": true,
+    "commonjs": true,
+    "es2021": true
+  },
+  "extends": ["google", "prettier"],
+  "overrides": [],
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": "latest"
+  },
+  "rules": {
+    "require-jsdoc": "off",
+    "no-implicit-globals": "error",
+    "no-undef": "error"
+  },
+  "plugins": ["eslint-plugin-html"],
+  "ignorePatterns": []
+}

@@ -1,151 +1,46 @@
 <!DOCTYPE html>
-<html lang="en" style="height: 100%; margin: 0;">
-<head>
-  <title>Bubblesets - Example</title>
-  <meta charset="utf-8">
-  <link rel="canonical" href="https://bubblesets-js.josuakrause.com/">
-  <script src="bubblesets.js" charset="utf-8"></script>
-</head>
-<body onload="start()" style="width: 100vw; height: 90vh; margin: 0; padding: 0; text-align: center;">
+<html lang="en" style="height: 100%; margin: 0">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-4DHJEMESJD"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(...args) {
+        window.dataLayer.push(args);
+      }
+      gtag('js', new Date());
 
-<h3>Bubblesets for JavaScript</h3>
-<p>Add rectangles by clicking with the left or right mouse button on the canvas. <a href="https://github.com/JosuaKrause/bubblesets-js">GitHub Repository</a></p>
-<svg id="main" style="width: 90vw; height: 80vh; margin: 0 auto;">
-  <rect x="0" y="0" width="100%" height="100%" style="stroke: black; stroke-width: 1; fill: none;"></rect>
-</svg>
-
-<script>
-function attr(elem, attr) {
-  for(key in attr) {
-    var value = attr[key];
-    if(value === null) {
-      elem.removeAttribute(key);
-    } else {
-      elem.setAttribute(key, value);
-    }
-  }
-}
-
-function style(elem, style) {
-  for(key in style) {
-    var value = style[key];
-    if(value === null) {
-      delete elem.style.removeProperty(key);
-    } else {
-      elem.style.setProperty(key, value);
-    }
-  }
-}
-
-function appendSVG(parent, name) {
-  return parent.appendChild(document.createElementNS("http://www.w3.org/2000/svg", name));
-}
-
-function removeAllChilds(parent) {
-  while(parent.firstChild) {
-    parent.removeChild(parent.firstChild);
-  }
-}
-
-function start() {
-  var bubbles = new BubbleSet();
-  var rectanglesA = [];
-  var rectanglesB = [];
-  var main = document.getElementById("main");
-  var items = appendSVG(main, "g");
-  var pathA = appendSVG(main, "path");
-  var pathB = appendSVG(main, "path");
-  var debug = appendSVG(main, "g");
-  bubbles.debug(false);
-  var debugFor = pathA;
-
-  function update() {
-    updateOutline(rectanglesA, rectanglesB, "crimson", pathA);
-    updateOutline(rectanglesB, rectanglesA, "cornflowerblue", pathB);
-  }
-
-  function updateOutline(rectangles, otherRectangles, color, path) {
-    var pad = 5;
-    var list = bubbles.createOutline(
-      BubbleSet.addPadding(rectangles, pad),
-      BubbleSet.addPadding(otherRectangles, pad),
-      null /* lines */
-    );
-    // rectangles need to have the form { x: 0, y: 0, width: 0, height: 0 }
-    // lines need to have the form { x1: 0, x2: 0, y1: 0, y2: 0 }
-    // lines can be null to infer lines between rectangles automatically
-    var outline = new PointPath(list).transform([
-      new ShapeSimplifier(0.0),
-      new BSplineShapeGenerator(),
-      new ShapeSimplifier(0.0),
-    ]);
-    // outline is a path that can be used for the attribute d of a path element
-    attr(path, {
-      "d": outline,
-      "opacity": 0.5,
-      "fill": color,
-      "stroke": "black",
-    });
-    if(bubbles.debug() && path === debugFor) {
-      removeAllChilds(debug);
-      bubbles.debugPotentialArea().forEach(function(r) {
-        var rect = appendSVG(debug, "rect");
-        attr(rect, {
-          x: r.x,
-          y: r.y,
-          width: r.width,
-          height: r.height
-        });
-        var color = r.value === r.threshold ? "0, 0, 0" : r.value > 0 ? "150, 20, 20" : "20, 20, 150";
-        style(rect, {
-          "fill": "rgb(" + color + ")",
-          "opacity": r.value === r.threshold ? 0.5 : Math.min(255, Math.abs(r.value * 40)) / 255.0
-        });
-      });
-    }
-  };
-
-  function addRect(rectangles, color, cx, cy) {
-    var width = 40;
-    var height = 30;
-    var x = cx - width * 0.5;
-    var y = cy - height * 0.5;
-    var elem = appendSVG(items, "rect");
-    attr(elem, {
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-    });
-    style(elem, {
-      "stroke": "black",
-      "stroke-width": 1,
-      "fill": color,
-    });
-    rectangles.push({
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-      elem: elem,
-    });
-    update();
-  }
-
-  main.onclick = function(e) {
-    addRect(rectanglesA, "cornflowerblue", e.offsetX, e.offsetY);
-  };
-  var oldX = Number.NaN;
-  var oldY = Number.NaN;
-  main.oncontextmenu = function(e) {
-    if(oldX === e.offsetX && oldY === e.offsetY) return;
-    oldX = e.offsetX;
-    oldY = e.offsetY;
-    addRect(rectanglesB, "crimson", e.offsetX, e.offsetY);
-    e.preventDefault();
-  };
-}
-</script>
-
-</body>
+      gtag('config', 'G-4DHJEMESJD');
+    </script>
+    <!-- Google tag end -->
+    <title>Bubblesets - Example</title>
+    <link rel="canonical" href="https://bubblesets-js.josuakrause.com/" />
+    <link rel="stylesheet" href="index.css" />
+    <script async src="index.js" type="module"></script>
+  </head>
+  <body>
+    <div class="hmain">
+      <div class="vmain">
+        <div class="header">Bubblesets for JavaScript</div>
+        <div id="topbar" class="topbar"></div>
+        <div id="main" class="main"></div>
+        <div id="bottombar" class="bottombar"></div>
+        <div id="footer" class="footer"></div>
+      </div>
+    </div>
+    <footer>
+      <div class="footer-style">
+        © jk 2024
+        <a href="https://github.com/JosuaKrause/bubblesets-js" target="_blank">
+          [source]
+        </a>
+      </div>
+    </footer>
+  </body>
 </html>
