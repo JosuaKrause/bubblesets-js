@@ -313,7 +313,10 @@ svg {
 @media (hover: none) and (max-width: 480px) {
   .main {
     width: 100%;
-    height: auto;
+  }
+
+  svg {
+    width: 100%;
   }
 }
 
