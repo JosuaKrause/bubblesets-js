@@ -27,9 +27,16 @@
  */
 /**
  * @typedef {{
+ *  id: string | null,
+ *  name: string,
+ *  create: (items: SVGElement, rectangles: SVGRectObj[][], width: number, height: number) => void | null,
+ * }} Preset
+ */
+/**
+ * @typedef {{
  *  initPreset: number,
  *  initIx: number,
- *  onPresetUpdate: (ix: number, create: (items: SVGElement, rectangles: SVGRectObj[][]) => void | null) => void,
+ *  onPresetUpdate: (preset: Preset) => void,
  *  onColorUpdate: (ix: number) => void,
  *  onDebugUpdate: (isDebug: boolean) => void,
  *  onRemoveUpdate: (isRemove: boolean) => void,
@@ -89,6 +96,42 @@ function removeAllChilds(/** @type {SVGElement} */ parent) {
   }
 }
 
+function getSize(/** @type {HTMLElement | SVGElement} */ elem) {
+  let width = elem.clientWidth;
+  let height = elem.clientHeight;
+  if (width === 0 || height === 0) {
+    // taking care of firefox
+    const bbox = elem.getBoundingClientRect();
+    width = bbox.width;
+    height = bbox.height;
+  }
+  return [width, height];
+}
+
+function centerPointList(
+  /** @type {number[][][]} */ points,
+  /** @type {number} */ width,
+  /** @type {number} */ height,
+) {
+  const [sx, sy, total] = points.reduce(
+    (prev, ps) => {
+      return ps.reduce(
+        (pv, p) => [pv[0] + p[0], pv[1] + p[1], pv[2] + 1],
+        [prev[0], prev[1], prev[2]],
+      );
+    },
+    [0, 0, 0],
+  );
+  return points.map((ps) => {
+    return ps.map((p) => {
+      return [
+        p[0] + width / 2 - sx / total - DEFAULT_WIDTH / 2,
+        p[1] + height / 2 - sy / total - DEFAULT_HEIGHT / 2,
+      ];
+    });
+  });
+}
+
 function fromPointList(
   /** @type {SVGElement} */ items,
   /** @type {SVGRectObj[][]} */ rectangles,
@@ -121,20 +164,17 @@ const colors = [
   '#999999',
 ];
 
-/**
- * @type {{
- *  name: string,
- *  create: (items: SVGElement, rectangles: SVGRectObj[][]) => void | null,
- * }[]}
- */
+/** @type {Preset[]} */
 const presets = [
   {
+    id: null,
     name: 'Custom',
     create: null,
   },
   {
+    id: 'bigb',
     name: 'Big B',
-    create: (items, rectangles) => {
+    create: (items, rectangles, width, height) => {
       const points = [
         [
           [498, 142],
@@ -164,7 +204,7 @@ const presets = [
           [688, 190],
         ],
       ];
-      fromPointList(items, rectangles, points);
+      fromPointList(items, rectangles, centerPointList(points, width, height));
     },
   },
 ];
@@ -203,14 +243,16 @@ function addPresetSelect(
   });
   selectPreset.addEventListener('change', () => {
     const newIx = +selectPreset.value;
-    controls.onPresetUpdate(newIx, presets[newIx].create);
+    controls.onPresetUpdate(presets[newIx]);
   });
   selectPreset.value = `${controls.initPreset}`;
   div.appendChild(selectPreset);
   main.appendChild(div);
   return {
     updatePreset: (/** @type {number} */ ix) => {
-      selectPreset.value = `${ix}`;
+      if (selectPreset.value !== `${ix}`) {
+        selectPreset.value = `${ix}`;
+      }
     },
   };
 }
@@ -239,7 +281,9 @@ function addColorSelect(
   main.appendChild(div);
   return {
     updateColor: (/** @type {number} */ ix) => {
-      selectColor.value = `${ix}`;
+      if (selectColor.value !== `${ix}`) {
+        selectColor.value = `${ix}`;
+      }
     },
   };
 }
@@ -392,20 +436,37 @@ function clearAll(
 }
 
 function parseData(
+  /** @type {SVGElement} */ svg,
   /** @type {SVGElement} */ items,
   /** @type {SVGRectObj[][]} */ rectangles,
+  /** @type {number} */ defaultPresetIx,
+  /** @type {string | null} */ presetId,
   /** @type {string | null} */ data,
 ) {
   clearAll(items, rectangles);
+  const presetIx = presets.findIndex(
+    (preset) => preset.id && preset.id === presetId,
+  );
+  const preset = presetIx >= 0 ? presets[presetIx] : null;
+  if (preset?.create) {
+    const [width, height] = getSize(svg);
+    preset.create(items, rectangles, width, height);
+    return presetIx;
+  }
   if (!data) {
-    return;
+    const defaultPreset = presets[defaultPresetIx];
+    if (defaultPreset.create) {
+      const [width, height] = getSize(svg);
+      defaultPreset.create(items, rectangles, width, height);
+    }
+    return defaultPresetIx;
   }
   JSON.parse(atob(data)).forEach(
     (/** @type {number[][]} */ rects, /** @type {number} */ ix) => {
       if (ix >= rectangles.length) {
         return;
       }
-      rects.map((r) =>
+      rects.forEach((r) =>
         addRect(items, rectangles[ix], colors[ix], {
           x: +r[0],
           y: +r[1],
@@ -415,12 +476,10 @@ function parseData(
       );
     },
   );
+  return 0;
 }
 
 function generateData(/** @type {SVGRectObj[][]} */ rectangles) {
-  if (rectangles.every((rects) => !rects.length)) {
-    return null;
-  }
   const highIx = rectangles.reduce(
     (highIx, rects, ix) => (rects.length ? ix + 1 : highIx),
     0,
@@ -443,12 +502,22 @@ function generateData(/** @type {SVGRectObj[][]} */ rectangles) {
   );
 }
 
-function updateURL(/** @type {SVGRectObj[][]} */ rectangles) {
+function updateURL(
+  /** @type {Preset} */ preset,
+  /** @type {SVGRectObj[][]} */ rectangles,
+) {
   try {
-    const data = generateData(rectangles);
+    let data;
     const url = new URL(location.href);
+    const presetId = preset.id;
+    if (presetId) {
+      data = null;
+      url.searchParams.set('preset', presetId);
+    } else {
+      data = generateData(rectangles);
+      url.searchParams.delete('preset');
+    }
     if (data) {
-      console.log(atob(data));
       url.searchParams.set('data', data);
     } else {
       url.searchParams.delete('data');
@@ -457,6 +526,7 @@ function updateURL(/** @type {SVGRectObj[][]} */ rectangles) {
       console.log('new state');
       window.history.pushState(
         {
+          preset: presetId,
           data,
         },
         '',
@@ -482,7 +552,7 @@ function isTextTarget(/** @type {HTMLElement} */ target) {
 }
 
 function start() {
-  let curPreset = 1;
+  const defaultPreset = 1;
   let curColor = 0;
   let removeMode = false;
   /** @type {SVGRectObj[][]} */
@@ -499,15 +569,15 @@ function start() {
   bubbles.debug(false);
 
   const controls = addControls({
-    initPreset: curPreset,
+    initPreset: defaultPreset,
     initIx: curColor,
-    onPresetUpdate: (ix, create) => {
-      curPreset = ix;
-      if (create) {
+    onPresetUpdate: (preset) => {
+      if (preset.create) {
         clearAll(items, rectangles);
-        create(items, rectangles);
+        const [width, height] = getSize(svg);
+        preset.create(items, rectangles, width, height);
         update();
-        updateURL(rectangles);
+        updateURL(preset, rectangles);
       }
     },
     onColorUpdate: (ix) => {
@@ -524,7 +594,7 @@ function start() {
     onClear: () => {
       clearAll(items, rectangles);
       update();
-      updateURL(rectangles);
+      updateURL(presets[0], rectangles);
     },
   });
 
@@ -612,7 +682,7 @@ function start() {
     }
     controls.updatePreset(0);
     update();
-    updateURL(rectangles);
+    updateURL(presets[0], rectangles);
   });
 
   window.addEventListener('keydown', (e) => {
@@ -642,7 +712,8 @@ function start() {
       return;
     }
     if (e.key === 'Shift') {
-      controls.setRemoveMode(e.shiftKey);
+      removeMode = e.shiftKey;
+      controls.setRemoveMode(removeMode);
       if (target && target.blur) {
         target.blur();
       }
@@ -652,10 +723,20 @@ function start() {
   window.addEventListener('keydown', onShift);
   window.addEventListener('keyup', onShift);
 
-  function load(/** @type {string | null} */ data) {
+  function load(
+    /** @type {string | null} */ presetId,
+    /** @type {string | null} */ data,
+  ) {
     try {
-      parseData(items, rectangles, data);
-      controls.updatePreset(0);
+      const newPresetIx = parseData(
+        svg,
+        items,
+        rectangles,
+        defaultPreset,
+        presetId,
+        data,
+      );
+      controls.updatePreset(newPresetIx);
     } catch (_) {
       // ignore errors
     }
@@ -663,14 +744,15 @@ function start() {
   }
 
   const url = new URL(location.href);
+  const loadPresetId = url.searchParams.get('preset');
   const loadData = url.searchParams.get('data');
-  if (loadData) {
-    load(loadData);
-  }
+  load(loadPresetId, loadData);
   window.addEventListener('popstate', (event) => {
     /** @type {string | null} */
+    const presetId = event.state?.preset;
+    /** @type {string | null} */
     const data = event.state?.data;
-    load(data ?? null);
+    load(presetId ?? null, data ?? null);
   });
 }
 
