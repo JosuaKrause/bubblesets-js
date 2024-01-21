@@ -1,6 +1,6 @@
 {
   "name": "bubblesets",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "A JavaScript implementation of Bubble Sets.",
   "type": "module",
   "main": "bubblesets.js",
