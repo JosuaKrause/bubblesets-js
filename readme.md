@@ -21,7 +21,7 @@ import {
   BubbleSet,
   PointPath,
   ShapeSimplifier,
-} from './bubblesets.js';
+} from 'bubblesets';
 
 const pad = 5;
 // bubbles can be reused for subsequent runs or different sets of rectangles
