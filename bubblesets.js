@@ -434,7 +434,7 @@ export class Line {
 } // Line
 
 export class Area {
-  static BLOCK_SIZE = 16;
+  static BLOCK_SIZE = 32;
 
   constructor() {
     /** @type {Rectangle | null} */
