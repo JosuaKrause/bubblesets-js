@@ -183,6 +183,7 @@ a:focus {
 .header span,
 .header a {
   font-weight: 500;
+  text-decoration: none;
 }
 
 @media (hover: none) and (max-width: 480px) {
