@@ -18,7 +18,17 @@
 
 /** @typedef {{x: number, y: number, width: number, height: number}} RectObj */
 /** @typedef {{x1: number, y1: number, x2: number, y2: number}} LineObj */
-/** @typedef {{x: number, y: number, width: number, height: number, value: number, threshold: number}} DebugRectObj */
+/**
+ * @typedef {{
+ *  x: number,
+ *  y: number,
+ *  width: number,
+ *  height: number,
+ *  value: number,
+ *  threshold: number,
+ *  gap: boolean,
+ * }} DebugRectObj
+ */
 
 export class Rectangle {
   constructor(/** @type {RectObj | undefined} */ _rect) {
@@ -434,7 +444,7 @@ export class Line {
 } // Line
 
 export class Area {
-  static BLOCK_SIZE = 8;
+  static BLOCK_SIZE = 16;
 
   constructor() {
     /** @type {Rectangle | null} */
@@ -1218,16 +1228,15 @@ export class BubbleSet {
         y < this._potentialArea.maxY();
         y += 1
       ) {
-        if (this._potentialArea.has(x, y)) {
-          rects.push({
-            x: x * this._pixelGroup + Math.floor(this._activeRegion.minX()),
-            y: y * this._pixelGroup + Math.floor(this._activeRegion.minY()),
-            width: this._pixelGroup,
-            height: this._pixelGroup,
-            value: this._potentialArea.get(x, y),
-            threshold: this._lastThreshold,
-          });
-        }
+        rects.push({
+          x: x * this._pixelGroup + Math.floor(this._activeRegion.minX()),
+          y: y * this._pixelGroup + Math.floor(this._activeRegion.minY()),
+          width: this._pixelGroup,
+          height: this._pixelGroup,
+          value: this._potentialArea.get(x, y),
+          threshold: this._lastThreshold,
+          gap: !this._potentialArea.has(x, y),
+        });
       }
     }
     return rects;

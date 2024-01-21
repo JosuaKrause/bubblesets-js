@@ -302,18 +302,22 @@ function start() {
           width: `${r.width}`,
           height: `${r.height}`,
         });
-        const color =
-          r.value === r.threshold
-            ? '0, 0, 0'
-            : r.value > 0
-            ? '150, 20, 20'
-            : '20, 20, 150';
+        const color = r.gap
+          ? '0, 0, 0'
+          : r.value === r.threshold
+          ? '20, 150, 20'
+          : r.value > r.threshold
+          ? '150, 20, 20'
+          : '20, 20, 150';
         style(rect, {
           fill: `rgb(${color})`,
           opacity:
-            r.value === r.threshold
+            r.value === r.threshold || r.gap
               ? `${0.5}`
-              : `${Math.min(255, Math.abs(r.value * 40)) / 255.0}`,
+              : `${
+                  Math.min(100, 50 + Math.abs((r.value - r.threshold) * 20)) /
+                  100
+                }`,
         });
       });
     }
