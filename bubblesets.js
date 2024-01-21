@@ -1,5 +1,6 @@
 /**
- * Copyright 2024 Josua Krause, Christopher Collins
+ * Copyright 2014 Josua Krause, Christopher Collins
+ * Copyright 2024 Josua Krause
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,8 +13,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Originally created by Josua Krause on 2014-10-25.
  */
 // @ts-check
 
@@ -435,30 +434,75 @@ export class Line {
 } // Line
 
 export class Area {
-  constructor(/** @type {number} */ width, /** @type {number} */ height) {
-    /** @type {number} */
-    this._width = width;
-    /** @type {number} */
-    this._height = height;
-    /** @type {number} */
-    this._size = width * height;
-    /** @type {Float32Array} */
-    this._buff = new Float32Array(this._size);
+  static BLOCK_SIZE = 16;
+
+  constructor() {
+    /** @type {Rectangle | null} */
+    this._bbox = null;
+    /** @type {{ [key: string]: Float32Array }} */
+    this._buffs = {};
   }
 
-  bound(/** @type {number} */ pos, /** @type {boolean} */ isX) {
-    if (pos < 0) {
-      return 0;
+  blockCoord(/** @type {number} */ pos) {
+    return Math.floor(pos / Area.BLOCK_SIZE);
+  }
+
+  getBlock(/** @type {number} */ x, /** @type {number} */ y) {
+    return `${this.blockCoord(x)}x${this.blockCoord(y)}`;
+  }
+
+  getBlockRect(/** @type {number} */ x, /** @type {number} */ y) {
+    return new Rectangle({
+      x: this.blockCoord(x) * Area.BLOCK_SIZE,
+      y: this.blockCoord(y) * Area.BLOCK_SIZE,
+      width: Area.BLOCK_SIZE,
+      height: Area.BLOCK_SIZE,
+    });
+  }
+
+  getPosInBlock(/** @type {number} */ x, /** @type {number} */ y) {
+    const xblock = Math.floor(
+      ((x % Area.BLOCK_SIZE) + Area.BLOCK_SIZE) % Area.BLOCK_SIZE,
+    );
+    const yblock = Math.floor(
+      ((y % Area.BLOCK_SIZE) + Area.BLOCK_SIZE) % Area.BLOCK_SIZE,
+    );
+    return xblock + yblock * Area.BLOCK_SIZE;
+  }
+
+  getBuffWrite(/** @type {number} */ x, /** @type {number} */ y) {
+    const block = this.getBlock(x, y);
+    const res = this._buffs[block];
+    if (res) {
+      return res;
     }
-    return Math.min(pos, (isX ? this._width : this._height) - 1);
+    const newRes = new Float32Array(Area.BLOCK_SIZE * Area.BLOCK_SIZE);
+    this._buffs[block] = newRes;
+    const blockRect = this.getBlockRect(x, y);
+    if (!this._bbox) {
+      this._bbox = blockRect;
+    } else {
+      this._bbox.add(blockRect);
+    }
+    return newRes;
+  }
+
+  getBuffRead(/** @type {number} */ x, /** @type {number} */ y) {
+    const block = this.getBlock(x, y);
+    return this._buffs[block] ?? null;
+  }
+
+  has(/** @type {number} */ x, /** @type {number} */ y) {
+    const buff = this.getBuffRead(x, y);
+    return !!buff;
   }
 
   get(/** @type {number} */ x, /** @type {number} */ y) {
-    if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
-      console.warn('Area.get out of bounds', x, y, this._width, this._height);
-      return Number.NaN;
+    const buff = this.getBuffRead(x, y);
+    if (!buff) {
+      return 0;
     }
-    return this._buff[x + y * this._width];
+    return buff[this.getPosInBlock(x, y)];
   }
 
   set(
@@ -466,19 +510,28 @@ export class Area {
     /** @type {number} */ y,
     /** @type {number} */ v,
   ) {
-    if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
-      console.warn('Area.set out of bounds', x, y, this._width, this._height);
-      return;
-    }
-    this._buff[x + y * this._width] = v;
+    const buff = this.getBuffWrite(x, y);
+    buff[this.getPosInBlock(x, y)] = v;
   }
 
-  width() {
-    return this._width;
+  bbox() {
+    return new Rectangle(this._bbox?.rect());
   }
 
-  height() {
-    return this._height;
+  minX() {
+    return this._bbox?.minX() ?? 0;
+  }
+
+  maxX() {
+    return this._bbox?.maxX() ?? 0;
+  }
+
+  minY() {
+    return this._bbox?.minY() ?? 0;
+  }
+
+  maxY() {
+    return this._bbox?.maxY() ?? 0;
   }
 } // Area
 
@@ -742,9 +795,6 @@ export class MarchingSquares {
     /** @type {number} */ res,
   ) {
     const v = this._potentialArea.get(x, y);
-    if (Number.isNaN(v)) {
-      return v;
-    }
     if (v > this._threshold) {
       return dir + res;
     }
@@ -757,12 +807,6 @@ export class MarchingSquares {
     dir = this.updateDir(x + 1, y, dir, 2);
     dir = this.updateDir(x, y + 1, dir, 4);
     dir = this.updateDir(x + 1, y + 1, dir, 8);
-    if (Number.isNaN(dir)) {
-      console.warn(
-        `marched out of bounds: ${x} ${y} bounds: ${this._potentialArea.width()} ${this._potentialArea.height()}`,
-      );
-      return -1;
-    }
     return dir;
   }
 
@@ -848,13 +892,13 @@ export class MarchingSquares {
 
   march() {
     for (
-      let x = 0;
-      x < this._potentialArea.width() && !this._marched;
+      let x = this._potentialArea.minX();
+      x < this._potentialArea.maxX() && !this._marched;
       x += 1
     ) {
       for (
-        let y = 0;
-        y < this._potentialArea.height() && !this._marched;
+        let y = this._potentialArea.minY();
+        y < this._potentialArea.maxY() && !this._marched;
         y += 1
       ) {
         if (
@@ -1043,10 +1087,7 @@ export class BubbleSet {
         2 * this._morphBuffer,
     });
 
-    this._potentialArea = new Area(
-      Math.ceil(this._activeRegion.width() / this._pixelGroup),
-      Math.ceil(this._activeRegion.height() / this._pixelGroup),
-    );
+    this._potentialArea = new Area();
 
     const estLength =
       (Math.floor(this._activeRegion.width()) +
@@ -1167,16 +1208,26 @@ export class BubbleSet {
       console.warn('debug mode should be activated');
     }
     /** @type {DebugRectObj[]} */ const rects = [];
-    for (let x = 0; x < this._potentialArea.width(); x += 1) {
-      for (let y = 0; y < this._potentialArea.height(); y += 1) {
-        rects.push({
-          x: x * this._pixelGroup + Math.floor(this._activeRegion.minX()),
-          y: y * this._pixelGroup + Math.floor(this._activeRegion.minY()),
-          width: this._pixelGroup,
-          height: this._pixelGroup,
-          value: this._potentialArea.get(x, y),
-          threshold: this._lastThreshold,
-        });
+    for (
+      let x = this._potentialArea.minX();
+      x < this._potentialArea.maxX();
+      x += 1
+    ) {
+      for (
+        let y = this._potentialArea.minY();
+        y < this._potentialArea.maxY();
+        y += 1
+      ) {
+        if (this._potentialArea.has(x, y)) {
+          rects.push({
+            x: x * this._pixelGroup + Math.floor(this._activeRegion.minX()),
+            y: y * this._pixelGroup + Math.floor(this._activeRegion.minY()),
+            width: this._pixelGroup,
+            height: this._pixelGroup,
+            value: this._potentialArea.get(x, y),
+            threshold: this._lastThreshold,
+          });
+        }
       }
     }
     return rects;
@@ -1734,21 +1785,17 @@ export class BubbleSet {
     lines.forEach((line) => {
       const lr = line.rect();
       // only traverse the plausible area
-      const startX = potentialArea.bound(
-        Math.floor((lr.minX() - r1 - activeRegion.minX()) / this._pixelGroup),
-        true,
+      const startX = Math.floor(
+        (lr.minX() - r1 - activeRegion.minX()) / this._pixelGroup,
       );
-      const startY = potentialArea.bound(
-        Math.floor((lr.minY() - r1 - activeRegion.minY()) / this._pixelGroup),
-        false,
+      const startY = Math.floor(
+        (lr.minY() - r1 - activeRegion.minY()) / this._pixelGroup,
       );
-      const endX = potentialArea.bound(
-        Math.ceil((lr.maxX() + r1 - activeRegion.minX()) / this._pixelGroup),
-        true,
+      const endX = Math.ceil(
+        (lr.maxX() + r1 - activeRegion.minX()) / this._pixelGroup,
       );
-      const endY = potentialArea.bound(
-        Math.ceil((lr.maxY() + r1 - activeRegion.minY()) / this._pixelGroup),
-        false,
+      const endY = Math.ceil(
+        (lr.maxY() + r1 - activeRegion.minY()) / this._pixelGroup,
       );
       // for every point in active part of potentialArea, calculate distance to nearest point on line and add influence
       for (let y = startY; y < endY; y += 1) {
@@ -1852,29 +1899,17 @@ export class BubbleSet {
       console.warn('expected positive influence', influenceFactor);
     }
     // find the affected subregion of potentialArea
-    const startX = potentialArea.bound(
-      Math.floor(
-        (rect.minX() - r1 - this._activeRegion.minX()) / this._pixelGroup,
-      ),
-      true,
+    const startX = Math.floor(
+      (rect.minX() - r1 - this._activeRegion.minX()) / this._pixelGroup,
     );
-    const startY = potentialArea.bound(
-      Math.floor(
-        (rect.minY() - r1 - this._activeRegion.minY()) / this._pixelGroup,
-      ),
-      false,
+    const startY = Math.floor(
+      (rect.minY() - r1 - this._activeRegion.minY()) / this._pixelGroup,
     );
-    const endX = potentialArea.bound(
-      Math.ceil(
-        (rect.maxX() + r1 - this._activeRegion.minX()) / this._pixelGroup,
-      ),
-      true,
+    const endX = Math.ceil(
+      (rect.maxX() + r1 - this._activeRegion.minX()) / this._pixelGroup,
     );
-    const endY = potentialArea.bound(
-      Math.ceil(
-        (rect.maxY() + r1 - this._activeRegion.minY()) / this._pixelGroup,
-      ),
-      false,
+    const endY = Math.ceil(
+      (rect.maxY() + r1 - this._activeRegion.minY()) / this._pixelGroup,
     );
     // for every point in active subregion of potentialArea, calculate
     // distance to nearest point on rectangle and add influence
@@ -1907,29 +1942,17 @@ export class BubbleSet {
       console.warn('expected negative influence', influenceFactor);
     }
     // find the affected subregion of potentialArea
-    const startX = potentialArea.bound(
-      Math.floor(
-        (rect.minX() - r1 - this._activeRegion.minX()) / this._pixelGroup,
-      ),
-      true,
+    const startX = Math.floor(
+      (rect.minX() - r1 - this._activeRegion.minX()) / this._pixelGroup,
     );
-    const startY = potentialArea.bound(
-      Math.floor(
-        (rect.minY() - r1 - this._activeRegion.minY()) / this._pixelGroup,
-      ),
-      false,
+    const startY = Math.floor(
+      (rect.minY() - r1 - this._activeRegion.minY()) / this._pixelGroup,
     );
-    const endX = potentialArea.bound(
-      Math.ceil(
-        (rect.maxX() + r1 - this._activeRegion.minX()) / this._pixelGroup,
-      ),
-      true,
+    const endX = Math.ceil(
+      (rect.maxX() + r1 - this._activeRegion.minX()) / this._pixelGroup,
     );
-    const endY = potentialArea.bound(
-      Math.ceil(
-        (rect.maxY() + r1 - this._activeRegion.minY()) / this._pixelGroup,
-      ),
-      false,
+    const endY = Math.ceil(
+      (rect.maxY() + r1 - this._activeRegion.minY()) / this._pixelGroup,
     );
     // for every point in active subregion of potentialArea, calculate
     // distance to nearest point on rectangle and add influence

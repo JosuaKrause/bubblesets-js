@@ -1,5 +1,6 @@
 /**
- * Copyright 2024 Josua Krause, Christopher Collins
+ * Copyright 2014 Josua Krause, Christopher Collins
+ * Copyright 2024 Josua Krause
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

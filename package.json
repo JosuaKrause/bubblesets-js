@@ -1,6 +1,6 @@
 {
   "name": "bubblesets",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A JavaScript implementation of Bubble Sets.",
   "type": "module",
   "main": "bubblesets.js",
@@ -19,6 +19,16 @@
     "visualization"
   ],
   "author": "Josua Krause",
+  "contributors": [
+    {
+      "name": "Josua Krause",
+      "url": "https://www.josuakrause.com/"
+    },
+    {
+      "name": "Christopher Collins",
+      "url": "https://innovis.cpsc.ucalgary.ca/People/ChristopherCollins"
+    }
+  ],
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/JosuaKrause/bubblesets-js/issues"
