@@ -236,11 +236,11 @@ export function addControls(/** @type {Controls} */ controls) {
   const footNormal = document.createElement('div');
   footNormal.classList.add('normalonly');
   footNormal.textContent =
-    'Add boxes by clicking and remove the currently closest point via Shift+Click.';
+    'Add boxes by clicking and remove boxes via Shift+Click.';
   const footMobile = document.createElement('div');
   footMobile.classList.add('mobileonly');
   footMobile.textContent =
-    'Add boxes by tapping. Select "Remove" to remove points instead.';
+    'Add boxes by tapping. Select "Remove" to remove boxes instead.';
   const footer = document.getElementById('footer');
   footer.appendChild(footNormal);
   footer.appendChild(footMobile);
