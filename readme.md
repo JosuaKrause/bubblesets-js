@@ -1,7 +1,7 @@
 BubbleSets for JavaScript
 =========================
 
-A JavaScript implementation of [Christopher Collins' bubble sets](https://innovis.cpsc.ucalgary.ca/Research/BubbleSets)
+A JavaScript implementation of [Christopher Collins' bubble sets](https://vialab.ca/research/bubble-sets)
 without the use of external libraries.
 You can find [a Java implementation here](https://github.com/JosuaKrause/Bubble-Sets).
 
