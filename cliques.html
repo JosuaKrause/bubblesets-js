@@ -8,21 +8,18 @@
       http-equiv="refresh"
       content="0; URL=https://bubblesets-js.josuakrause.com/index.html?preset=cliques"
     />
-    <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-4DHJEMESJD"
-    ></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(...args) {
-        window.dataLayer.push(args);
-      }
-      gtag('js', new Date());
-
-      gtag('config', 'G-4DHJEMESJD');
+      window.goatcounter = {
+        path: function (p) {
+          return location.host + p;
+        },
+      };
     </script>
-    <!-- Google tag end -->
+    <script
+      data-goatcounter="https://josuakrause.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
     <title>Bubblesets - Cliques</title>
     <link
       rel="icon"
